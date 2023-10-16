@@ -146,8 +146,8 @@ class SearchAgent(Agent):
 
         state: a GameState object (pacman.py)
         """
-        # if 'actionIndex' not in dir(self):
-        #     self.actionIndex = 0
+        if 'actionIndex' not in dir(self):
+            self.actionIndex = 0
         i = self.actionIndex
         self.actionIndex += 1
         if i < len(self.actions):

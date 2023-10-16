@@ -108,7 +108,8 @@ def depthFirstSearch(problem: SearchProblem) -> list[str]:
         next_node = path[next_node][0]
     return actions
 
-def breadthFirstSearch(problem: SearchProblem):
+
+def breadthFirstSearch(problem: SearchProblem) -> list[str]:
     """Search the shallowest nodes in the search tree first."""
     from util import Queue
     frontier = Queue()
@@ -127,10 +128,29 @@ def breadthFirstSearch(problem: SearchProblem):
     return actions
 
 
-def uniformCostSearch(problem: SearchProblem):
+def uniformCostSearch(problem: SearchProblem) -> list[str]:
     """Search the node of the least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    from util import PriorityQueue
+    frontier = PriorityQueue()
+    next_node = problem.getStartState()
+    path = {next_node: (None, None, 0, 1)}
+    # (parent, action, cost, collected) parent:(int, int) action:str cost:int collected:int
+    actions = []
+    while not problem.isGoalState(next_node):
+        for successor in problem.getSuccessors(next_node):
+            if successor[0] not in path:  # 如果不在frontier中，就加入frontier并更新路径
+                frontier.push(successor[0], path[next_node][2] + successor[2])
+                path[successor[0]] = (next_node, successor[1], path[next_node][2] + successor[2], 0)
+            elif not path[successor[0]][3] and path[next_node][2] + successor[2] < path[successor[0]][2]:
+                # 如果在frontier中，但是没有被收集过，就视情况更新frontier和路径
+                frontier.update(successor[0], path[next_node][2] + successor[2])
+                path[successor[0]] = (next_node, successor[1], path[next_node][2] + successor[2], 0)
+        next_node = frontier.pop()
+        path[next_node] = (path[next_node][0], path[next_node][1], path[next_node][2], 1)
+    while next_node != problem.getStartState():
+        actions.insert(0, path[next_node][1])
+        next_node = path[next_node][0]
+    return actions
 
 
 def nullHeuristic(state, problem=None):

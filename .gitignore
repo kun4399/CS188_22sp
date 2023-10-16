@@ -1,2 +1,7 @@
 note
 **/__pycache__
+.DS_store
+.vscode
+*.pyc
+*.orig
+*~
