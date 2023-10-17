@@ -130,6 +130,7 @@ def breadthFirstSearch(problem: SearchProblem) -> list[str]:
 
 def uniformCostSearch(problem: SearchProblem) -> list[str]:
     """Search the node of the least total cost first."""
+    # 这个类似Dijkstra算法，在寻找过程中回计算出到每一个点的最短路径
     from util import PriorityQueue
     frontier = PriorityQueue()
     next_node = problem.getStartState()
@@ -162,9 +163,27 @@ def nullHeuristic(state, problem=None):
 
 
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
+    # 与UCS不同的是不一定每个点都是最短路径，但到达goal一定是最短路径
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    from util import PriorityQueueWithFunction
+    next_node = problem.getStartState()
+    path = {next_node: (None, None, 0, 1)}  # (parent, action, cost, collected)
+    frontier = PriorityQueueWithFunction(lambda x: path[x][2] + heuristic(x, problem))  # x: (x,y)
+    actions = []
+    while not problem.isGoalState(next_node):
+        for successor in problem.getSuccessors(next_node):
+            if successor[0] not in path:
+                path[successor[0]] = (next_node, successor[1], path[next_node][2] + successor[2], 0)
+                frontier.push(successor[0])
+            elif not path[successor[0]][3] and path[next_node][2] + successor[2] < path[successor[0]][2]:
+                path[successor[0]] = (next_node, successor[1], path[next_node][2] + successor[2], 0)
+                frontier.update(successor[0], path[successor[0]][2] + heuristic(successor[0], problem))
+        next_node = frontier.pop()
+        path[next_node] = (path[next_node][0], path[next_node][1], path[next_node][2], 1)
+    while next_node != problem.getStartState():
+        actions.insert(0, path[next_node][1])
+        next_node = path[next_node][0]
+    return actions
 
 
 # Abbreviations
