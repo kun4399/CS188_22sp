@@ -338,7 +338,7 @@ class CornersProblem(search.SearchProblem):
             if not startingGameState.hasFood(*corner):
                 print('Warning: no food in corner ' + str(corner))
         self._expanded = 0  # DO NOT CHANGE; Number of search nodes expanded
-        self.start_state = (0, 0, 0, 0, self.startingPosition)  # 四个0代表四个角落是否被访问过，最后一个是当前位置
+        self.start_state = (False, False, False, False, self.startingPosition)  # 前四个代表四个角落是否被访问过，最后一个是当前位置
 
     def getStartState(self):
         """
@@ -351,7 +351,7 @@ class CornersProblem(search.SearchProblem):
         """
         Returns whether this search state is a goal state of the problem.
         """
-        if state[0] == state[1] == state[2] == state[3] == 1:
+        if state[0] == state[1] == state[2] == state[3] == True:
             return True
         return False
 
@@ -378,7 +378,7 @@ class CornersProblem(search.SearchProblem):
             nextx, nexty = int(x + dx), int(y + dy)
             if not self.walls[nextx][nexty]:
                 if (nextx, nexty) in self.corners:
-                    nextState[self.corners.index((nextx, nexty))] = 1
+                    nextState[self.corners.index((nextx, nexty))] = True
                 nextState[4] = (nextx, nexty)
                 nextState = tuple(nextState)
                 successors.append((nextState, action, 1))
@@ -401,7 +401,7 @@ class CornersProblem(search.SearchProblem):
         return len(actions)
 
 
-def cornersHeuristic(state: Any, problem: CornersProblem):
+def cornersHeuristic(state: Any, problem: CornersProblem) -> int:  # state: (bool,bool, bool, bool, (x, y))
     """
     A heuristic for the CornersProblem that you defined.
 
@@ -414,12 +414,44 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible (as well as consistent).
     """
+    # 这部分最好直接画图并标上corner的index来写
     corners = problem.corners  # These are the corner coordinates
     # These are the walls of the maze, as a Grid (game.py)
     walls = problem.walls
+    nonvisited_num: int = state[0] + state[1] + state[2] + state[3]
+    length = corners[1][1] - corners[0][1]
+    width = corners[2][0] - corners[0][0]
+    if width > length:
+        length, width = width, length
+    if nonvisited_num == 0:
+        return 2 * width + length + getLeastDistance(state[4], corners)
+    elif nonvisited_num == 1:
+        corner_index = state.index(True)
+        if corner_index == 0 or corner_index == 3:
+            return width + length + getLeastDistance(state[4], (corners[1], corners[2]))
+        else:
+            return width + length + getLeastDistance(state[4], (corners[0], corners[3]))
+    elif nonvisited_num == 2:
+        corners_unvisited = []
+        for i in range(4):
+            if state[i] == False:
+                corners_unvisited.append(corners[i])
+        corners_unvisited = tuple(corners_unvisited)
+        return getLeastDistance(state[4], corners_unvisited) + getLeastDistance(corners_unvisited[0], (corners_unvisited[1],))
+    elif nonvisited_num == 3:
+        corner_index = state.index(False)
+        return getLeastDistance(state[4], (corners[corner_index],))
+    else:
+        return 0
 
-    "*** YOUR CODE HERE ***"
-    return 0  # Default to trivial solution
+
+def getLeastDistance(state: Tuple[int, int], corners: Tuple[Tuple[int, int]]) -> int:
+    """辅助判断最短到达角落的距离"""
+    dist = 999999
+    for corner in corners:
+        if dist > abs(state[0] - corner[0]) + abs(state[1] - corner[1]):
+            dist = abs(state[0] - corner[0]) + abs(state[1] - corner[1])
+    return dist
 
 
 class AStarCornersAgent(SearchAgent):
