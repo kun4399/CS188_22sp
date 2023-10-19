@@ -187,7 +187,7 @@ class GameState:
     def getNumFood(self):
         return self.data.food.count()
 
-    def getFood(self):
+    def getFood(self) -> layout.Grid:
         """
         Returns a Grid of boolean food indicator variables.
 

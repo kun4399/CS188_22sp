@@ -434,7 +434,7 @@ def cornersHeuristic(state: Any, problem: CornersProblem) -> int:  # state: (boo
     elif nonvisited_num == 2:
         corners_unvisited = []
         for i in range(4):
-            if state[i] == False:
+            if not state[i]:
                 corners_unvisited.append(corners[i])
         corners_unvisited = tuple(corners_unvisited)
         return getLeastDistance(state[4], corners_unvisited) + getLeastDistance(corners_unvisited[0],
@@ -613,15 +613,13 @@ class ClosestDotSearchAgent(SearchAgent):
         food = gameState.getFood()
         walls = gameState.getWalls()
         problem = AnyFoodSearchProblem(gameState)
-
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return search.bfs(problem)  # 用bfs算法来找到最近的food
 
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
     A search problem for finding a path to any food.
-
+    用来找到距离当前位置最近的food然后就解决了
     This search problem is just like the PositionSearchProblem, but has a
     different goal test, which you need to fill in below.  The state space and
     successor function do not need to be changed.
@@ -650,9 +648,9 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         complete the problem definition.
         """
         x, y = state
-
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        if self.food[x][y]:
+            return True
+        return False
 
 
 def mazeDistance(point1: Tuple[int, int],
