@@ -417,7 +417,7 @@ def cornersHeuristic(state: Any, problem: CornersProblem) -> int:  # state: (boo
     # 这部分最好直接画图并标上corner的index来写
     corners = problem.corners  # These are the corner coordinates
     # These are the walls of the maze, as a Grid (game.py)
-    walls = problem.walls
+    # walls = problem.walls
     nonvisited_num: int = state[0] + state[1] + state[2] + state[3]
     length = corners[1][1] - corners[0][1]
     width = corners[2][0] - corners[0][0]
@@ -437,7 +437,8 @@ def cornersHeuristic(state: Any, problem: CornersProblem) -> int:  # state: (boo
             if state[i] == False:
                 corners_unvisited.append(corners[i])
         corners_unvisited = tuple(corners_unvisited)
-        return getLeastDistance(state[4], corners_unvisited) + getLeastDistance(corners_unvisited[0], (corners_unvisited[1],))
+        return getLeastDistance(state[4], corners_unvisited) + getLeastDistance(corners_unvisited[0],
+                                                                                (corners_unvisited[1],))
     elif nonvisited_num == 3:
         corner_index = state.index(False)
         return getLeastDistance(state[4], (corners[corner_index],))
@@ -530,7 +531,7 @@ class AStarFoodSearchAgent(SearchAgent):
         self.searchType = FoodSearchProblem
 
 
-def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
+def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem) -> int:
     """
     Your heuristic for the FoodSearchProblem goes here.
 
@@ -558,9 +559,28 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
-    position, foodGrid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+    # 尝试使用最小生成树（Prim算法）来估计h-value
+    from util import PriorityQueue
+    position, foodGrid = state  # state : ((x, y), foodGrid)
+    foodList = foodGrid.asList()
+    if len(foodList) == 0:
+        return 0
+    least_dist = {}
+    uncollected = PriorityQueue()
+    h_value = 0
+    for food in foodList[1:]:  # food : (x, y)
+        uncollected.push(food, util.manhattanDistance(food, foodList[0]))
+        least_dist[food] = util.manhattanDistance(food, foodList[0])
+    while not uncollected.isEmpty():
+        food = uncollected.pop()
+        for neighbor in uncollected.heap:
+            if util.manhattanDistance(food, neighbor[2]) < least_dist[neighbor[2]]:
+                least_dist[neighbor[2]] = util.manhattanDistance(food, neighbor[2])
+                uncollected.update(neighbor[2], util.manhattanDistance(food, neighbor[2]))
+    for food in least_dist:
+        h_value += least_dist[food]
+    h_value += getLeastDistance(position, tuple(foodList))
+    return h_value
 
 
 class ClosestDotSearchAgent(SearchAgent):
