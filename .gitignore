@@ -6,3 +6,4 @@ note
 *.orig
 *~
 *.token
+**/.idea
