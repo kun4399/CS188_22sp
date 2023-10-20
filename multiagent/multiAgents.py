@@ -109,6 +109,7 @@ def scoreEvaluationFunction(currentGameState: GameState):
 
 class MultiAgentSearchAgent(Agent):
     """
+    注意这个只是pacman的代理不会代理ghost
     This class provides some common elements to all of your
     multi-agent searchers.  Any methods defined here will be available
     to the MinimaxPacmanAgent, AlphaBetaPacmanAgent & ExpectimaxPacmanAgent.
@@ -125,7 +126,7 @@ class MultiAgentSearchAgent(Agent):
     def __init__(self, evalFn='scoreEvaluationFunction', depth='2'):
         self.index = 0  # Pacman is always agent index 0
         self.evaluationFunction = util.lookup(evalFn, globals())
-        self.depth = int(depth)
+        self.depth = int(depth)  # depth 是用来控制搜索深度的,注意这里的1个depth指的是所有agent都走了一步
 
 
 class MinimaxAgent(MultiAgentSearchAgent):
@@ -133,7 +134,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
     Your minimax agent (question 2)
     """
 
-    def getAction(self, gameState: GameState):
+    def getAction(self, gameState: GameState) -> str:
         """
         Returns the minimax action from the current gameState using self.depth
         and self.evaluationFunction.
@@ -151,13 +152,30 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns the total number of agents in the game
 
         gameState.isWin():
-        Returns whether or not the game state is a winning state
+        Returns whether the game state is a winning state
 
         gameState.isLose():
-        Returns whether or not the game state is a losing state
+        Returns whether the game state is a losing state
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        actions = gameState.getLegalActions(self.index)
+        path = {}
+        for action in actions:
+            path[self.searchHelper(gameState.generateSuccessor(self.index, action), 1, 1)] = action
+        return path[max(path.keys())]
+
+    def searchHelper(self, gameState: GameState, depth: int, agentIndex: int) -> int:
+        """辅助搜索函数"""
+        if gameState.isWin() or gameState.isLose() or depth == self.depth * gameState.getNumAgents():
+            return self.evaluationFunction(gameState)
+        actions: list = gameState.getLegalActions(agentIndex)
+        values = []
+        for action in actions:
+            values.append(self.searchHelper(gameState.generateSuccessor(agentIndex, action), depth + 1,
+                                            (agentIndex + 1) % gameState.getNumAgents()))
+        if agentIndex == 0:
+            return max(values)
+        else:
+            return min(values)
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
