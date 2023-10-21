@@ -187,8 +187,39 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         Returns the minimax action using self.depth and self.evaluationFunction
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        actions = gameState.getLegalActions(self.index)
+        path = {}
+        alpha = -9999
+        beta = 9999
+        for action in actions:
+            value = self.searchHelper(gameState.generateSuccessor(self.index, action), 1, 1, alpha, beta)
+            path[value] = action
+            alpha = max(alpha, value)
+        return path[alpha]
+
+    def searchHelper(self, gameState: GameState, depth: int, agentIndex: int, alpha: int, beta: int) -> int:
+        """辅助搜索函数"""
+        if gameState.isWin() or gameState.isLose() or depth == self.depth * gameState.getNumAgents():
+            return self.evaluationFunction(gameState)
+        actions: list = gameState.getLegalActions(agentIndex)
+        if agentIndex == 0:
+            value = -9999
+            for action in actions:
+                value = max(value, self.searchHelper(gameState.generateSuccessor(agentIndex, action), depth + 1,
+                                                     (agentIndex + 1) % gameState.getNumAgents(), alpha, beta))
+                if value > beta:
+                    return value
+                alpha = max(alpha, value)
+            return value
+        else:
+            value = 9999
+            for action in actions:
+                value = min(value, self.searchHelper(gameState.generateSuccessor(agentIndex, action), depth + 1,
+                                                     (agentIndex + 1) % gameState.getNumAgents(), alpha, beta))
+                if value < alpha:
+                    return value
+                beta = min(beta, value)
+            return value
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
