@@ -41,7 +41,6 @@ class ReflexAgent(Agent):
         """
         # Collect legal moves and successor states
         legalMoves = gameState.getLegalActions()  # action 新增了 STOP
-        # legalMoves.remove(Directions.STOP)
         # Choose one of the best actions
         scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
         bestScore = max(scores)
@@ -255,15 +254,28 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
             return sum(values) / len(values)
 
 
-def betterEvaluationFunction(currentGameState: GameState):
+def betterEvaluationFunction(currentGameState: GameState) -> float:
     """
     Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
     evaluation function (question 5).
-
-    DESCRIPTION: <write something here so we know what you did>
+    这里要和project1的heuristic区分开来,倒是和reflexAgent的evaluationFunction很像
+    DESCRIPTION: <通过综合考虑当前状态的分数，剩余食物数量，食物与pacman的距离，胶囊数量，来评估当前状态的好坏，其中当前分数是为了避免
+    吃豆人徘徊或暂停不动，是一个惩罚分数，剩余食物数量是为了鼓励吃豆人吃掉食物，食物与pacman的距离是为了鼓励吃豆人吃掉距离自己最近的食物，
+    胶囊数量是为了鼓励吃豆人吃掉胶囊，因为吃掉胶囊后，吃豆人可以吃掉幽灵，所以胶囊数量也是一个鼓励分数。>
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    if currentGameState.isWin():
+        return 999999
+    if currentGameState.isLose():
+        return -999999
+    evaluate_val = currentGameState.getScore()
+    capsule_Pos: list[tuple[int, int]] = currentGameState.getCapsules()
+    food_num = currentGameState.getNumFood()
+    food_list = currentGameState.getFood().asList()
+    pacman_Pos = currentGameState.getPacmanPosition()
+    pacman_dist = getLeastDistance(pacman_Pos, tuple(food_list))
+    evaluate_val = evaluate_val * 0.1 - food_num * 0.25 - pacman_dist * 0.1 - len(capsule_Pos) * 0.4
+    return evaluate_val
 
 
 # Abbreviation

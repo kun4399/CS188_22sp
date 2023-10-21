@@ -568,7 +568,7 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem) -
     least_dist = {}
     uncollected = PriorityQueue()
     h_value = 0
-    for food in foodList[1:]:  # food : (x, y)
+    for food in foodList[1:]:  # food : (x, y) fooodlist[0]默认为生成树的起始点
         uncollected.push(food, util.manhattanDistance(food, foodList[0]))
         least_dist[food] = util.manhattanDistance(food, foodList[0])
     while not uncollected.isEmpty():
