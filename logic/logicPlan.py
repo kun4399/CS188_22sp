@@ -42,6 +42,8 @@ geq_num_adj_wall_str_map = dict([(num, "GEQ_{}_adj_walls".format(num)) for num i
 DIR_TO_DXDY_MAP = {'North': (0, 1), 'South': (0, -1), 'East': (1, 0), 'West': (-1, 0)}
 
 
+# non_outer_wall_coords 指地图中除了外围的墙以外的所有坐标
+
 # ______________________________________________________________________________
 # QUESTION 1
 
@@ -98,7 +100,7 @@ def sentence3() -> Expr:
     return conjoin(result)
 
 
-def findModel(sentence: Expr) -> Dict[Expr, bool]:
+def findModel(sentence: Expr) -> Dict[Expr, bool]:  # 这个就是model的数据类型
     """Given a propositional logic sentence (i.e. a Expr instance), returns a satisfying
     model if one exists. Otherwise, returns False.
     eg: findModel(sentence1()) should return:{B: True, A: False, C: True}
@@ -225,9 +227,7 @@ def pacmanSuccessorAxiomSingle(x: int, y: int, time: int, walls_grid: List[List[
     if not possible_causes:
         return None
 
-    "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
-    "*** END YOUR CODE HERE ***"
+    return PropSymbolExpr(pacman_str, x, y, time=now) % disjoin(possible_causes)
 
 
 def SLAMSuccessorAxiomSingle(x: int, y: int, time: int, walls_grid: List[List[bool]]) -> Expr:
@@ -298,15 +298,22 @@ def pacphysicsAxioms(t: int, all_coords: List[Tuple], non_outer_wall_coords: Lis
             locations on this time step. Consider edge cases. Don't call if None.
     """
     pacphysics_sentences = []
-
-    "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
-    "*** END YOUR CODE HERE ***"
-
+    for coord in all_coords:
+        x, y = coord
+        pacphysics_sentences.append(PropSymbolExpr(wall_str, x, y) >> ~PropSymbolExpr(pacman_str, x, y, time=t))
+    pacphysics_sentences.append(exactlyOne(
+        [PropSymbolExpr(pacman_str, x, y, time=t) for x, y in non_outer_wall_coords]))
+    pacphysics_sentences.append(exactlyOne(
+        [PropSymbolExpr(direction, time=t) for direction in DIRECTIONS]))
+    if sensorModel:
+        pacphysics_sentences.append(sensorModel(t, non_outer_wall_coords))
+    if successorAxioms and t > 0:  # 这里的这个t > 0是因为t = 0的时候没有前一个状态，这个debug花了很久
+        pacphysics_sentences.append(successorAxioms(t, walls_grid, non_outer_wall_coords))
     return conjoin(pacphysics_sentences)
 
 
-def checkLocationSatisfiability(x1_y1: Tuple[int, int], x0_y0: Tuple[int, int], action0, action1, problem):
+def checkLocationSatisfiability(x1_y1: Tuple[int, int], x0_y0: Tuple[int, int], action0, action1, problem) \
+        -> Tuple[dict, dict]:
     """
     Given:
         - x1_y1 = (x1, y1), a potential location at time t = 1
@@ -324,6 +331,7 @@ def checkLocationSatisfiability(x1_y1: Tuple[int, int], x0_y0: Tuple[int, int], 
     walls_grid = problem.walls
     walls_list = walls_grid.asList()
     all_coords = list(itertools.product(range(problem.getWidth() + 2), range(problem.getHeight() + 2)))
+    # itertools.product用于生成多个可迭代对象的笛卡尔积（Cartesian product）。
     non_outer_wall_coords = list(itertools.product(range(1, problem.getWidth() + 1), range(1, problem.getHeight() + 1)))
     KB = []
     x0, y0 = x0_y0
@@ -332,10 +340,15 @@ def checkLocationSatisfiability(x1_y1: Tuple[int, int], x0_y0: Tuple[int, int], 
     # We know which coords are walls:
     map_sent = [PropSymbolExpr(wall_str, x, y) for x, y in walls_list]
     KB.append(conjoin(map_sent))
-
-    "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
-    "*** END YOUR CODE HERE ***"
+    KB.append(pacphysicsAxioms(0, all_coords, non_outer_wall_coords, walls_grid, None, allLegalSuccessorAxioms))
+    KB.append(pacphysicsAxioms(1, all_coords, non_outer_wall_coords, walls_grid, None, allLegalSuccessorAxioms))
+    # 这里要把t= 1的情况也加上因为要推理t = 1的情况。也就是说这里的KB是从t=0到t=1的所有已知的命题
+    KB.append(PropSymbolExpr(pacman_str, x0, y0, time=0))
+    KB.append(PropSymbolExpr(action0, time=0))
+    KB.append(PropSymbolExpr(action1, time=1))  # 起始这里不用action1也能解出来model
+    pacman_loc_t1 = PropSymbolExpr(pacman_str, x1, y1, time=1)
+    # 其实这里可以只需用一次或者两次findModel函数
+    return findModel(conjoin(KB + [pacman_loc_t1])), findModel(conjoin(KB + [~pacman_loc_t1]))  # 最终分别求解两个model
 
 
 # ______________________________________________________________________________
@@ -610,11 +623,11 @@ def SLAMSuccessorAxioms(t: int, walls_grid: List[List], non_outer_wall_coords: L
 
 
 def modelToString(model: Dict[Expr, bool]) -> str:
-    """Converts the model to a string for printing purposes. The keys of a model are 
+    """Converts the model to a string for printing purposes. The keys of a model are
     sorted before converting the model to a string.
-    
-    model: Either a boolean False or a dictionary of Expr symbols (keys) 
-    and a corresponding assignment of True or False (values). This model is the output of 
+
+    model: Either a boolean False or a dictionary of Expr symbols (keys)
+    and a corresponding assignment of True or False (values). This model is the output of
     a call to pycoSAT.
     """
     if model == False:
