@@ -170,9 +170,7 @@ def atLeastOne(literals: List[Expr]) -> Expr:
     >>> print(pl_true(atleast1,model2))
     True
     """
-    "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
-    "*** END YOUR CODE HERE ***"
+    return disjoin(literals)
 
 
 def atMostOne(literals: List[Expr]) -> Expr:
@@ -182,9 +180,11 @@ def atMostOne(literals: List[Expr]) -> Expr:
     the expressions in the list is true.
     itertools.combinations may be useful here.
     """
-    "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
-    "*** END YOUR CODE HERE ***"
+    result = []
+    combinations = itertools.combinations(literals, 2)
+    for combination in combinations:
+        result.append(~combination[0] | ~combination[1])
+    return conjoin(result)
 
 
 def exactlyOne(literals: List[Expr]) -> Expr:
@@ -193,9 +193,7 @@ def exactlyOne(literals: List[Expr]) -> Expr:
     CNF (conjunctive normal form)that represents the logic that exactly one of 
     the expressions in the list is true.
     """
-    "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
-    "*** END YOUR CODE HERE ***"
+    return conjoin([atLeastOne(literals), atMostOne(literals)])
 
 
 # ______________________________________________________________________________
