@@ -18,6 +18,8 @@ Pacman agents (in logicAgents.py).
 """
 
 from typing import Dict, List, Tuple, Callable, Generator, Any
+
+import layout
 import util
 import sys
 import logic
@@ -201,7 +203,7 @@ def exactlyOne(literals: List[Expr]) -> Expr:
 # ______________________________________________________________________________
 # QUESTION 3
 
-def pacmanSuccessorAxiomSingle(x: int, y: int, time: int, walls_grid: List[List[bool]] = None) -> Expr:
+def pacmanSuccessorAxiomSingle(x: int, y: int, time: int, walls_grid: layout.Grid = None) -> Expr:
     """
     Successor state axiom for state (x,y,t) (from t-1), given the board (as a 
     grid representing the wall locations).
@@ -372,18 +374,24 @@ def positionLogicPlan(problem) -> List:
                                         range(height + 2)))
     non_wall_coords = [loc for loc in all_coords if loc not in walls_list]
     actions = ['North', 'South', 'East', 'West']
-    KB = []
-    KB.append(PropSymbolExpr(pacman_str, x0, y0, time=0))
-    print("initial pacman position:", x0, y0)
-    print("goal position:", xg, yg)
+    KB = [PropSymbolExpr(pacman_str, x0, y0, time=0)]
     for t in range(50):
         print("t = ", t)
         KB.append(exactlyOne([PropSymbolExpr(pacman_str, x, y, time=t) for x, y in non_wall_coords]))
-        model = findModel(conjoin(KB + [PropSymbolExpr(pacman_str, xg, yg, time=t)]))
+        model = findModel(
+            conjoin(KB + [PropSymbolExpr(pacman_str, xg, yg, time=t)]))  # 这里把goal作为命题（额外信息）加入到KB中，构成了整个寻找食物的路径的最终命题
         if model is not False:
-            return extractActionSequence(model, actions)
+            return extractActionSequence(model, actions)  # 这个函数是用来从model中提取出action序列的，还不知道怎么实现的
         KB.append(exactlyOne([PropSymbolExpr(action, time=t) for action in actions]))
         KB.append(allLegalSuccessorAxioms(t + 1, walls_grid, non_wall_coords))
+    '''
+    Summary:
+    For all x, y, t: if there is a wall at (x, y), then pacman is not at (x, y) at t.
+    For each t: Pacman is at exactly on of the locations described by all possible (x, y). Can be optimized with knowledge of outer or all walls, follow spec for each function.
+    For each t: Pacman takes exactly on of the possible actions.
+    For each t (except for t = ??): Transition model: Pacman is at (x, y) at t if and only if he was at (join with or: (x - dx, y - dy) at t-1 and took action (dx, dy) at t-1).
+    Note that the above always hold true regardless of any specific game, actions, etc. To the above always-true/ axiom rules, we add information consistent with what we know.
+    '''
 
 
 # ______________________________________________________________________________
@@ -397,11 +405,11 @@ def foodLogicPlan(problem) -> List:
     Note that STOP is not an available action.
     Overview: add knowledge incrementally, and query for a model each timestep. Do NOT use pacphysicsAxioms.
     """
-    walls = problem.walls
+    walls: layout.Grid = problem.walls
     width, height = problem.getWidth(), problem.getHeight()
     walls_list = walls.asList()
-    (x0, y0), food = problem.start
-    food = food.asList()
+    (x0, y0), foods = problem.start
+    foods = foods.asList()
 
     # Get lists of possible locations (i.e. without walls) and possible actions
     all_coords = list(itertools.product(range(width + 2), range(height + 2)))
@@ -409,11 +417,25 @@ def foodLogicPlan(problem) -> List:
     non_wall_coords = [loc for loc in all_coords if loc not in walls_list]
     actions = ['North', 'South', 'East', 'West']
 
-    KB = []
+    KB = [PropSymbolExpr(pacman_str, x0, y0, time=0)]
+    KB.append(conjoin([PropSymbolExpr(food_str, x, y, time=0) for x, y in foods]))
+    for t in range(50):
+        print("t = ", t)
+        KB.append(exactlyOne([PropSymbolExpr(pacman_str, x, y, time=t) for x, y in non_wall_coords]))
+        model = findModel(conjoin(KB + [conjoin([~PropSymbolExpr(food_str, x, y, time=t) for x, y in foods])]))
+        if model is not False:
+            return extractActionSequence(model, actions)
+        KB.append(exactlyOne([PropSymbolExpr(action, time=t) for action in actions]))
+        KB.append(allLegalSuccessorAxioms(t + 1, walls, non_wall_coords))
+        KB.append(allLegalFoodSuccessorAxioms(t + 1, foods))
 
-    "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
-    "*** END YOUR CODE HERE ***"
+
+def allLegalFoodSuccessorAxioms(t: int, foods: list[tuple]) -> Expr:
+    food_successor_axioms = []
+    for x, y in foods:
+        food_successor_axioms.append(PropSymbolExpr(food_str, x, y, time=t) % (
+                PropSymbolExpr(food_str, x, y, time=t - 1) & ~PropSymbolExpr(pacman_str, x, y, time=t - 1)))
+    return conjoin(food_successor_axioms)
 
 
 # ______________________________________________________________________________
@@ -603,7 +625,7 @@ def SLAMSensorAxioms(t: int, non_outer_wall_coords: List[Tuple[int, int]]) -> Ex
     return conjoin(all_percept_exprs + combo_var_def_exprs + percept_to_blocked_sent)
 
 
-def allLegalSuccessorAxioms(t: int, walls_grid: List[List], non_outer_wall_coords: List[Tuple[int, int]]) -> Expr:
+def allLegalSuccessorAxioms(t: int, walls_grid: layout.Grid, non_outer_wall_coords: List[Tuple[int, int]]) -> Expr:
     """walls_grid can be a 2D array of ints or bools."""
     all_xy_succ_axioms = []
     for x, y in non_outer_wall_coords:

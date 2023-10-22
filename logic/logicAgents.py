@@ -590,7 +590,7 @@ class FoodPlanningProblem:
 
     def __init__(self, startingGameState):
         self.start = (startingGameState.getPacmanPosition(), startingGameState.getFood())
-        self.walls = startingGameState.getWalls()
+        self.walls: Grid = startingGameState.getWalls()
         self.startingGameState = startingGameState
         self._expanded = 0  # DO NOT CHANGE
         self.heuristicInfo = {}  # A dictionary for the heuristic to store information
