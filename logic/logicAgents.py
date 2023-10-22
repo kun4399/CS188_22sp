@@ -39,6 +39,7 @@ import warnings
 import logicPlan
 import random
 
+
 class GoWestAgent(Agent):
     "An agent that goes West until it can't."
 
@@ -48,6 +49,7 @@ class GoWestAgent(Agent):
             return Directions.WEST
         else:
             return Directions.STOP
+
 
 #######################################################
 # This portion is written for you, but will only work #
@@ -100,10 +102,10 @@ class LogicAgent(Agent):
         if self.planningFunction == None:
             raise Exception("No planning function provided for LogicAgent")
         starttime = time.time()
-        problem = self.planType(state) # Makes a new planning problem
+        problem = self.planType(state)  # Makes a new planning problem
 
-        self.actions = [] # In case planningFunction times out
-        self.actions  = self.planningFunction(problem) # Find a path
+        self.actions = []  # In case planningFunction times out
+        self.actions = self.planningFunction(problem)  # Find a path
         totalCost = problem.getCostOfActions(self.actions)
         print('Path found with total cost of %d in %.1f seconds' % (totalCost, time.time() - starttime))
         # TODO Drop
@@ -130,6 +132,7 @@ class LogicAgent(Agent):
             return None
             # return Directions.STOP
 
+
 class CheckSatisfiabilityAgent(LogicAgent):
     def __init__(self, fn='checkLocationSatisfiability', prob='LocMapProblem', plan_mod=logicPlan):
         # Warning: some advanced Python magic is employed below to find the right functions and problems
@@ -151,14 +154,17 @@ class CheckSatisfiabilityAgent(LogicAgent):
         if self.planningFunction == None:
             raise Exception("No planning function provided for LogicAgent")
         starttime = time.time()
-        self.problem = self.planType(state) # Makes a new planning problem
+        self.problem = self.planType(state)  # Makes a new planning problem
 
     def getAction(self, state):
         return "EndGame"
 
+
 class LocalizeMapAgent(LogicAgent):
     """Parent class for localization, mapping, and slam"""
-    def __init__(self, fn='positionLogicPlan', prob='LocMapProblem', plan_mod=logicPlan, display=None, scripted_actions=[]):
+
+    def __init__(self, fn='positionLogicPlan', prob='LocMapProblem', plan_mod=logicPlan, display=None,
+                 scripted_actions=[]):
         # Warning: some advanced Python magic is employed below to find the right functions and problems
 
         # Get the planning function from the name and heuristic
@@ -198,7 +204,7 @@ class LocalizeMapAgent(LogicAgent):
         if self.planningFunction == None:
             raise Exception("No planning function provided for LogicAgent")
         starttime = time.time()
-        problem = self.planType(state) # Makes a new planning problem
+        problem = self.planType(state)  # Makes a new planning problem
 
         self.problem = problem
         self.state = self.problem.getStartState()
@@ -210,12 +216,14 @@ class LocalizeMapAgent(LogicAgent):
 
     def get_known_walls_non_walls_from_known_map(self, known_map):
         # map is 1 for known wall, 0 for 
-        known_walls = [[(True if entry==1 else False) for entry in row] for row in known_map]
-        known_non_walls = [[(True if entry==0 else False) for entry in row] for row in known_map]
+        known_walls = [[(True if entry == 1 else False) for entry in row] for row in known_map]
+        known_non_walls = [[(True if entry == 0 else False) for entry in row] for row in known_map]
         return known_walls, known_non_walls
 
+
 class LocalizationLogicAgent(LocalizeMapAgent):
-    def __init__(self, fn='localization', prob='LocalizationProblem', plan_mod=logicPlan, display=None, scripted_actions=[]):
+    def __init__(self, fn='localization', prob='LocalizationProblem', plan_mod=logicPlan, display=None,
+                 scripted_actions=[]):
         super(LocalizationLogicAgent, self).__init__(fn, prob, plan_mod, display, scripted_actions)
         self.num_timesteps = len(scripted_actions) if scripted_actions else 5
 
@@ -257,25 +265,26 @@ class LocalizationLogicAgent(LocalizeMapAgent):
 
     def getPercepts(self):
         x, y = self.state
-        north_iswall = self.problem.walls[x][y+1]
-        south_iswall = self.problem.walls[x][y-1]
-        east_iswall = self.problem.walls[x+1][y]
-        west_iswall = self.problem.walls[x-1][y]
+        north_iswall = self.problem.walls[x][y + 1]
+        south_iswall = self.problem.walls[x][y - 1]
+        east_iswall = self.problem.walls[x + 1][y]
+        west_iswall = self.problem.walls[x - 1][y]
         return [north_iswall, south_iswall, east_iswall, west_iswall]
 
     def getValidActions(self):
         x, y = self.state
         actions = []
-        if not self.problem.walls[x][y+1]: actions.append('North')
-        if not self.problem.walls[x][y-1]: actions.append('South')
-        if not self.problem.walls[x+1][y]: actions.append('East')
-        if not self.problem.walls[x-1][y]: actions.append('West')
+        if not self.problem.walls[x][y + 1]: actions.append('North')
+        if not self.problem.walls[x][y - 1]: actions.append('South')
+        if not self.problem.walls[x + 1][y]: actions.append('East')
+        if not self.problem.walls[x - 1][y]: actions.append('West')
         return actions
 
     def drawPossibleStates(self, possibleLocations=None, direction="North", pacman_position=None):
         import __main__
-        self.display.clearExpandedCells() # Erase previous colors
+        self.display.clearExpandedCells()  # Erase previous colors
         self.display.colorCircleCells(possibleLocations, direction=direction, pacman_position=pacman_position)
+
 
 class MappingLogicAgent(LocalizeMapAgent):
     def __init__(self, fn='mapping', prob='MappingProblem', plan_mod=logicPlan, display=None, scripted_actions=[]):
@@ -319,19 +328,19 @@ class MappingLogicAgent(LocalizeMapAgent):
 
     def getPercepts(self):
         x, y = self.state
-        north_iswall = self.problem.walls[x][y+1]
-        south_iswall = self.problem.walls[x][y-1]
-        east_iswall = self.problem.walls[x+1][y]
-        west_iswall = self.problem.walls[x-1][y]
+        north_iswall = self.problem.walls[x][y + 1]
+        south_iswall = self.problem.walls[x][y - 1]
+        east_iswall = self.problem.walls[x + 1][y]
+        west_iswall = self.problem.walls[x - 1][y]
         return [north_iswall, south_iswall, east_iswall, west_iswall]
 
     def getValidActions(self):
         x, y = self.state
         actions = []
-        if not self.problem.walls[x][y+1]: actions.append('North')
-        if not self.problem.walls[x][y-1]: actions.append('South')
-        if not self.problem.walls[x+1][y]: actions.append('East')
-        if not self.problem.walls[x-1][y]: actions.append('West')
+        if not self.problem.walls[x][y + 1]: actions.append('North')
+        if not self.problem.walls[x][y - 1]: actions.append('South')
+        if not self.problem.walls[x + 1][y]: actions.append('East')
+        if not self.problem.walls[x - 1][y]: actions.append('West')
         return actions
 
     def drawWallBeliefs(self, known_map=None, direction="North", visited_states_to_render=[]):
@@ -342,9 +351,10 @@ class MappingLogicAgent(LocalizeMapAgent):
         wallGrid = Grid(self.problem.walls.width, self.problem.walls.height, initialValue=False)
         wallGrid.data = known_walls
         allTrueWallGrid = Grid(self.problem.walls.width, self.problem.walls.height, initialValue=True)
-        self.display.clearExpandedCells() # Erase previous colors
-        self.display.drawWalls(wallGrid, formatColor(.9,0,0), allTrueWallGrid)
+        self.display.clearExpandedCells()  # Erase previous colors
+        self.display.drawWalls(wallGrid, formatColor(.9, 0, 0), allTrueWallGrid)
         refresh()
+
 
 class SLAMLogicAgent(LocalizeMapAgent):
     def __init__(self, fn='slam', prob='SLAMProblem', plan_mod=logicPlan, display=None, scripted_actions=[]):
@@ -399,10 +409,10 @@ class SLAMLogicAgent(LocalizeMapAgent):
 
     def getPercepts(self):
         x, y = self.state
-        north_iswall = self.problem.walls[x][y+1]
-        south_iswall = self.problem.walls[x][y-1]
-        east_iswall = self.problem.walls[x+1][y]
-        west_iswall = self.problem.walls[x-1][y]
+        north_iswall = self.problem.walls[x][y + 1]
+        south_iswall = self.problem.walls[x][y - 1]
+        east_iswall = self.problem.walls[x + 1][y]
+        west_iswall = self.problem.walls[x - 1][y]
         num_adj_walls = sum([north_iswall, south_iswall, east_iswall, west_iswall])
         # percept format: [adj_to_>=1_wall, adj_to_>=2_wall, adj_to_>=3_wall]
         percept = [num_adj_walls >= i for i in range(1, 4)]
@@ -413,14 +423,14 @@ class SLAMLogicAgent(LocalizeMapAgent):
             state = self.state
         x, y = state
         actions = []
-        if not self.problem.walls[x][y+1]: actions.append('North')
-        if not self.problem.walls[x][y-1]: actions.append('South')
-        if not self.problem.walls[x+1][y]: actions.append('East')
-        if not self.problem.walls[x-1][y]: actions.append('West')
+        if not self.problem.walls[x][y + 1]: actions.append('North')
+        if not self.problem.walls[x][y - 1]: actions.append('South')
+        if not self.problem.walls[x + 1][y]: actions.append('East')
+        if not self.problem.walls[x - 1][y]: actions.append('West')
         return actions
 
     def drawWallandPositionBeliefs(self, known_map=None, possibleLocations=None,
-            direction="North", visited_states_to_render=[], pacman_position=None):
+                                   direction="North", visited_states_to_render=[], pacman_position=None):
         import random
         import __main__
         from graphicsUtils import draw_background, refresh
@@ -436,11 +446,13 @@ class SLAMLogicAgent(LocalizeMapAgent):
                 if known_non_walls[x][y] == 1:
                     non_wall_coords.append((x, y))
 
-        self.display.clearExpandedCells() # Erase previous colors
+        self.display.clearExpandedCells()  # Erase previous colors
 
-        self.display.drawWalls(wallGrid, formatColor(.9,0,0), allTrueWallGrid)
-        self.display.colorCircleSquareCells(possibleLocations, square_cells=non_wall_coords, direction=direction, pacman_position=pacman_position)
+        self.display.drawWalls(wallGrid, formatColor(.9, 0, 0), allTrueWallGrid)
+        self.display.colorCircleSquareCells(possibleLocations, square_cells=non_wall_coords, direction=direction,
+                                            pacman_position=pacman_position)
         refresh()
+
 
 class PositionPlanningProblem(logicPlan.PlanningProblem):
     """
@@ -453,7 +465,7 @@ class PositionPlanningProblem(logicPlan.PlanningProblem):
     Note: this planning problem is fully specified; you should NOT change it.
     """
 
-    def __init__(self, gameState, costFn = lambda x: 1, goal=(1,1), start=None, warn=True, visualize=True):
+    def __init__(self, gameState, costFn=lambda x: 1, goal=(1, 1), start=None, warn=True, visualize=True):
         """
         Stores the start and goal.
 
@@ -471,7 +483,7 @@ class PositionPlanningProblem(logicPlan.PlanningProblem):
             print('Warning: this does not look like a regular position planning maze')
 
         # For display purposes
-        self._visited, self._visitedlist, self._expanded = {}, [], 0 # DO NOT CHANGE
+        self._visited, self._visitedlist, self._expanded = {}, [], 0  # DO NOT CHANGE
 
     def getStartState(self):
         return self.startState
@@ -488,29 +500,30 @@ class PositionPlanningProblem(logicPlan.PlanningProblem):
         You should not be calling it.
         """
         if actions == None: return 999999
-        x,y= self.getStartState()
+        x, y = self.getStartState()
         cost = 0
         for action in actions:
             # Check figure out the next state and see whether it's legal
             dx, dy = Actions.directionToVector(action)
             x, y = int(x + dx), int(y + dy)
             if self.walls[x][y]: return 999999
-            cost += self.costFn((x,y))
+            cost += self.costFn((x, y))
         return cost
-    
+
     def getWidth(self):
         """
         Returns the width of the playable grid (does not include the external wall)
         Possible x positions for agents will be in range [1,width]
         """
-        return self.walls.width-2
+        return self.walls.width - 2
 
     def getHeight(self):
         """
         Returns the height of the playable grid (does not include the external wall)
         Possible y positions for agents will be in range [1,height]
         """
-        return self.walls.height-2
+        return self.walls.height - 2
+
 
 def manhattanHeuristic(position, problem, info={}):
     "The Manhattan distance heuristic for a PositionPlanningProblem"
@@ -518,19 +531,22 @@ def manhattanHeuristic(position, problem, info={}):
     xy2 = problem.goal
     return abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
 
+
 def euclideanHeuristic(position, problem, info={}):
     "The Euclidean distance heuristic for a PositionPlanningProblem"
     xy1 = position
     xy2 = problem.goal
-    return ( (xy1[0] - xy2[0]) ** 2 + (xy1[1] - xy2[1]) ** 2 ) ** 0.5
+    return ((xy1[0] - xy2[0]) ** 2 + (xy1[1] - xy2[1]) ** 2) ** 0.5
+
 
 class LocMapProblem:
     """Parent class for Localization, Mapping, and SLAM."""
-    def __init__(self, gameState, costFn = lambda x: 1, goal=(1,1), start=None, warn=True, visualize=True):
+
+    def __init__(self, gameState, costFn=lambda x: 1, goal=(1, 1), start=None, warn=True, visualize=True):
         self.walls = gameState.getWalls()
         self.startState = gameState.getPacmanPosition()
         if start != None: self.startState = start
-        self._visited, self._visitedlist, self._expanded = {}, [], 0 # DO NOT CHANGE
+        self._visited, self._visitedlist, self._expanded = {}, [], 0  # DO NOT CHANGE
 
     def getStartState(self):
         return self.startState
@@ -540,23 +556,27 @@ class LocMapProblem:
         Returns the width of the playable grid (does not include the external wall)
         Possible x positions for agents will be in range [1,width]
         """
-        return self.walls.width-2
+        return self.walls.width - 2
 
     def getHeight(self):
         """
         Returns the height of the playable grid (does not include the external wall)
         Possible y positions for agents will be in range [1,height]
         """
-        return self.walls.height-2
+        return self.walls.height - 2
+
 
 class LocalizationProblem(LocMapProblem):
     pass
 
+
 class MappingProblem(LocMapProblem):
     pass
 
+
 class SLAMProblem(LocMapProblem):
     pass
+
 
 class FoodPlanningProblem:
     """
@@ -567,12 +587,13 @@ class FoodPlanningProblem:
       pacmanPosition: a tuple (x,y) of integers specifying Pacman's position
       foodGrid:       a Grid (see game.py) of either True or False, specifying remaining food
     """
+
     def __init__(self, startingGameState):
         self.start = (startingGameState.getPacmanPosition(), startingGameState.getFood())
         self.walls = startingGameState.getWalls()
         self.startingGameState = startingGameState
-        self._expanded = 0 # DO NOT CHANGE
-        self.heuristicInfo = {} # A dictionary for the heuristic to store information
+        self._expanded = 0  # DO NOT CHANGE
+        self.heuristicInfo = {}  # A dictionary for the heuristic to store information
 
     def getStartState(self):
         return self.start
@@ -584,7 +605,7 @@ class FoodPlanningProblem:
         This is included in the logic project solely for autograding purposes.
         You should not be calling it.
         """
-        x,y= self.getStartState()[0]
+        x, y = self.getStartState()[0]
         cost = 0
         for action in actions:
             # figure out the next state and see whether it's legal
@@ -594,17 +615,17 @@ class FoodPlanningProblem:
                 return 999999
             cost += 1
         return cost
-    
+
     def getWidth(self):
         """
         Returns the width of the playable grid (does not include the external wall)
         Possible x positions for agents will be in range [1,width]
         """
-        return self.walls.width-2
+        return self.walls.width - 2
 
     def getHeight(self):
         """
         Returns the height of the playable grid (does not include the external wall)
         Possible y positions for agents will be in range [1,height]
         """
-        return self.walls.height-2
+        return self.walls.height - 2
