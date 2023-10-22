@@ -243,7 +243,10 @@ class LocalizationLogicAgent(LocalizeMapAgent):
         planning_fn_output = None
         if i < self.num_timesteps:
             proposed_action = self.actions[i]
+            # try:
             planning_fn_output = next(self.planning_fn_output)
+            # except :
+            # print("Ran out of planning_fn_output")
             self.drawPossibleStates(planning_fn_output, direction=self.actions[i])
         elif i < len(self.actions):
             proposed_action = self.actions[i]

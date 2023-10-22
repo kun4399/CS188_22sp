@@ -20,6 +20,7 @@ Pacman agents (in logicAgents.py).
 from typing import Dict, List, Tuple, Callable, Generator, Any
 
 import layout
+import logicAgents
 import util
 import sys
 import logic
@@ -44,7 +45,7 @@ geq_num_adj_wall_str_map = dict([(num, "GEQ_{}_adj_walls".format(num)) for num i
 DIR_TO_DXDY_MAP = {'North': (0, 1), 'South': (0, -1), 'East': (1, 0), 'West': (-1, 0)}
 
 
-# non_outer_wall_coords 指地图中除了外围的墙以外的所有坐标
+# non_outer_wall_coords 指地图中除了外围的墙以外的所有坐标(即内部的墙和路)
 
 # ______________________________________________________________________________
 # QUESTION 1
@@ -298,6 +299,12 @@ def pacphysicsAxioms(t: int, all_coords: List[Tuple], non_outer_wall_coords: Lis
         - Results of calling sensorModel(...), unless None.
         - Results of calling successorAxioms(...), describing how Pacman can end in various
             locations on this time step. Consider edge cases. Don't call if None.
+    Summary:
+        For all x, y, t: if there is a wall at (x, y), then pacman is not at (x, y) at t.
+        For each t: Pacman is at exactly on of the locations described by all possible (x, y). Can be optimized with knowledge of outer or all walls, follow spec for each function.
+        For each t: Pacman takes exactly on of the possible actions.
+        For each t (except for t = ??): Transition model: Pacman is at (x, y) at t if and only if he was at (join with or: (x - dx, y - dy) at t-1 and took action (dx, dy) at t-1).
+        Note that the above always hold true regardless of any specific game, actions, etc. To the above always-true/ axiom rules, we add information consistent with what we know.
     """
     pacphysics_sentences = []
     for coord in all_coords:
@@ -419,6 +426,7 @@ def foodLogicPlan(problem) -> List:
 
     KB = [PropSymbolExpr(pacman_str, x0, y0, time=0)]
     KB.append(conjoin([PropSymbolExpr(food_str, x, y, time=0) for x, y in foods]))
+    # 注意这里要把所有食物在t = 0的时候都加入到KB中，感觉像是数列的初始项一样，之后再添加递的规则
     for t in range(50):
         print("t = ", t)
         KB.append(exactlyOne([PropSymbolExpr(pacman_str, x, y, time=t) for x, y in non_wall_coords]))
@@ -450,14 +458,23 @@ def localization(problem, agent) -> Generator:
     walls_list = walls_grid.asList()
     all_coords = list(itertools.product(range(problem.getWidth() + 2), range(problem.getHeight() + 2)))
     non_outer_wall_coords = list(itertools.product(range(1, problem.getWidth() + 1), range(1, problem.getHeight() + 1)))
-
-    KB = []
-
-    "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
-
+    KB = [conjoin([PropSymbolExpr(wall_str, x, y) for x, y in walls_list]),
+          conjoin([~PropSymbolExpr(wall_str, x, y) for x, y in all_coords if (x, y) not in walls_list])]
     for t in range(agent.num_timesteps):
-        "*** END YOUR CODE HERE ***"
+        possible_locations = []
+        KB.append(pacphysicsAxioms(t, all_coords, non_outer_wall_coords, walls_grid, sensorAxioms,
+                                   allLegalSuccessorAxioms))
+        KB.append(PropSymbolExpr(agent.actions[t], time=t))
+        KB.append(fourBitPerceptRules(t, agent.getPercepts()))
+        for x, y in non_outer_wall_coords:
+            if entails(conjoin(KB), PropSymbolExpr(pacman_str, x, y, time=t)):
+                KB.append(PropSymbolExpr(pacman_str, x, y, time=t))
+                possible_locations.append((x, y))
+            elif entails(conjoin(KB), ~PropSymbolExpr(pacman_str, x, y, time=t)):
+                KB.append(~PropSymbolExpr(pacman_str, x, y, time=t))
+            else:
+                possible_locations.append((x, y))
+        agent.moveToNextState(agent.actions[t])
         yield possible_locations
 
 
@@ -486,11 +503,7 @@ def mapping(problem, agent) -> Generator:
             outer_wall_sent.append(PropSymbolExpr(wall_str, x, y))
     KB.append(conjoin(outer_wall_sent))
 
-    "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
-
     for t in range(agent.num_timesteps):
-        "*** END YOUR CODE HERE ***"
         yield known_map
 
 
