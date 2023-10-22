@@ -485,6 +485,7 @@ def mapping(problem, agent) -> Generator:
     '''
     problem: a MappingProblem instance
     agent: a MappingLogicAgent instance
+    return : map: a 2D array of the same size as the one passed to the MappingProblem constructor.
     '''
     pac_x_0, pac_y_0 = problem.startState
     KB = []
@@ -502,8 +503,22 @@ def mapping(problem, agent) -> Generator:
             known_map[x][y] = 1
             outer_wall_sent.append(PropSymbolExpr(wall_str, x, y))
     KB.append(conjoin(outer_wall_sent))
-
+    KB.append(PropSymbolExpr(pacman_str, pac_x_0, pac_y_0, time=0))
+    known_map[pac_x_0][pac_y_0] = 0
+    KB.append(~PropSymbolExpr(wall_str, pac_x_0, pac_y_0))
     for t in range(agent.num_timesteps):
+        KB.append(pacphysicsAxioms(t, all_coords, non_outer_wall_coords, problem.walls, sensorAxioms,
+                                   allLegalSuccessorAxioms))
+        KB.append(PropSymbolExpr(agent.actions[t], time=t))
+        KB.append(fourBitPerceptRules(t, agent.getPercepts()))
+        for x, y in non_outer_wall_coords:
+            if entails(conjoin(KB), PropSymbolExpr(wall_str, x, y)):
+                known_map[x][y] = 1
+                KB.append(PropSymbolExpr(wall_str, x, y))
+            elif entails(conjoin(KB), ~PropSymbolExpr(wall_str, x, y)):
+                known_map[x][y] = 0
+                KB.append(~PropSymbolExpr(wall_str, x, y))
+        agent.moveToNextState(agent.actions[t])
         yield known_map
 
 
