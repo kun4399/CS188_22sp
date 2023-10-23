@@ -504,7 +504,7 @@ def mapping(problem, agent) -> Generator:
     KB.append(conjoin(outer_wall_sent))
     KB.append(PropSymbolExpr(pacman_str, pac_x_0, pac_y_0, time=0))
     known_map[pac_x_0][pac_y_0] = 0
-    # KB.append(~PropSymbolExpr(wall_str, pac_x_0, pac_y_0))
+    # KB.append(~PropSymbolExpr(wall_str, pac_x_0, pac_y_0)) 我认为这个可加可不加，要求是加上，但我没加，下面也是。
     for t in range(agent.num_timesteps):
         print("t = ", t)
         KB.append(pacphysicsAxioms(t, all_coords, non_outer_wall_coords, problem.walls, sensorAxioms,
@@ -554,7 +554,8 @@ def slam(problem, agent) -> Generator:
         print("t = ", t)
         KB.append(
             pacphysicsAxioms(t, all_coords, non_outer_wall_coords, walls_grid=known_map, sensorModel=SLAMSensorAxioms,
-                             successorAxioms=SLAMSuccessorAxioms)) # BUG: 注意这里的walls_grid是known_map，而不是problem.walls
+                             successorAxioms=SLAMSuccessorAxioms))
+        # BUG: 注意这里的walls_grid是known_map，而不是problem.walls。前面的注释已经写了这个是用在successorAxioms中的。
         KB.append(PropSymbolExpr(agent.actions[t], time=t))
         KB.append(numAdjWallsPerceptRules(t, agent.getPercepts()))
         possible_locations = []
