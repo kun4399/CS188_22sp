@@ -16,9 +16,8 @@ from bayesNet import Factor
 import functools
 from util import raiseNotDefined
 
+
 def joinFactorsByVariableWithCallTracking(callTrackingList=None):
-
-
     def joinFactorsByVariable(factors: List[Factor], joinVariable: str):
         """
         Input factors is a list of factors.
@@ -37,23 +36,26 @@ def joinFactorsByVariableWithCallTracking(callTrackingList=None):
         if not (callTrackingList is None):
             callTrackingList.append(('join', joinVariable))
 
-        currentFactorsToJoin =    [factor for factor in factors if joinVariable in factor.variablesSet()]
+        currentFactorsToJoin = [factor for factor in factors if joinVariable in factor.variablesSet()]
         currentFactorsNotToJoin = [factor for factor in factors if joinVariable not in factor.variablesSet()]
 
         # typecheck portion
-        numVariableOnLeft = len([factor for factor in currentFactorsToJoin if joinVariable in factor.unconditionedVariables()])
+        numVariableOnLeft = len(
+            [factor for factor in currentFactorsToJoin if joinVariable in factor.unconditionedVariables()])
         if numVariableOnLeft > 1:
             print("Factors failed joinFactorsByVariable typecheck: ", factors)
-            raise ValueError("The joinBy variable can only appear in one factor as an \nunconditioned variable. \n" +  
-                               "joinVariable: " + str(joinVariable) + "\n" +
-                               ", ".join(map(str, [factor.unconditionedVariables() for factor in currentFactorsToJoin])))
-        
+            raise ValueError("The joinBy variable can only appear in one factor as an \nunconditioned variable. \n" +
+                             "joinVariable: " + str(joinVariable) + "\n" +
+                             ", ".join(map(str, [factor.unconditionedVariables() for factor in currentFactorsToJoin])))
+
         joinedFactor = joinFactors(currentFactorsToJoin)
         return currentFactorsNotToJoin, joinedFactor
 
     return joinFactorsByVariable
 
+
 joinFactorsByVariable = joinFactorsByVariableWithCallTracking()
+
 
 ########### ########### ###########
 ########### QUESTION 2  ###########
@@ -95,22 +97,21 @@ def joinFactors(factors: ValuesView[Factor]):
         if len(intersect) > 0:
             print("Factors failed joinFactors typecheck: ", factors)
             raise ValueError("unconditionedVariables can only appear in one factor. \n"
-                    + "unconditionedVariables: " + str(intersect) + 
-                    "\nappear in more than one input factor.\n" + 
-                    "Input factors: \n" +
-                    "\n".join(map(str, factors)))
-
+                             + "unconditionedVariables: " + str(intersect) +
+                             "\nappear in more than one input factor.\n" +
+                             "Input factors: \n" +
+                             "\n".join(map(str, factors)))
 
     "*** YOUR CODE HERE ***"
     raiseNotDefined()
     "*** END YOUR CODE HERE ***"
+
 
 ########### ########### ###########
 ########### QUESTION 3  ###########
 ########### ########### ###########
 
 def eliminateWithCallTracking(callTrackingList=None):
-
     def eliminate(factor: Factor, eliminationVariable: str):
         """
         Input factor is a single factor.
@@ -141,16 +142,16 @@ def eliminateWithCallTracking(callTrackingList=None):
         if eliminationVariable not in factor.unconditionedVariables():
             print("Factor failed eliminate typecheck: ", factor)
             raise ValueError("Elimination variable is not an unconditioned variable " \
-                            + "in this factor\n" + 
-                            "eliminationVariable: " + str(eliminationVariable) + \
-                            "\nunconditionedVariables:" + str(factor.unconditionedVariables()))
-        
+                             + "in this factor\n" +
+                             "eliminationVariable: " + str(eliminationVariable) + \
+                             "\nunconditionedVariables:" + str(factor.unconditionedVariables()))
+
         if len(factor.unconditionedVariables()) == 1:
             print("Factor failed eliminate typecheck: ", factor)
             raise ValueError("Factor has only one unconditioned variable, so you " \
-                    + "can't eliminate \nthat variable.\n" + \
-                    "eliminationVariable:" + str(eliminationVariable) + "\n" +\
-                    "unconditionedVariables: " + str(factor.unconditionedVariables()))
+                             + "can't eliminate \nthat variable.\n" + \
+                             "eliminationVariable:" + str(eliminationVariable) + "\n" + \
+                             "unconditionedVariables: " + str(factor.unconditionedVariables()))
 
         "*** YOUR CODE HERE ***"
         raiseNotDefined()
@@ -158,5 +159,5 @@ def eliminateWithCallTracking(callTrackingList=None):
 
     return eliminate
 
-eliminate = eliminateWithCallTracking()
 
+eliminate = eliminateWithCallTracking()
