@@ -186,9 +186,13 @@ def inferenceByVariableEliminationWithCallTracking(callTrackingList=None):
                                    set(evidenceDict.keys())
             eliminationOrder = sorted(list(eliminationVariables))
 
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
-        "*** END YOUR CODE HERE ***"
+        left_factors_list = bayesNet.getAllCPTsWithEvidence(evidenceDict)
+        for eliminationVariable in eliminationOrder:
+            left_factors_list, factor_to_eliminate = joinFactorsByVariable(left_factors_list, eliminationVariable)
+            if len(factor_to_eliminate.unconditionedVariables()) > 1:
+                left_factors_list.append(eliminate(factor_to_eliminate, eliminationVariable))
+        final_factor = joinFactors(left_factors_list)  # 消完了之后，要把剩余的factor join起来（剩下的都是关于evidence和queryVariable的factor）
+        return normalize(final_factor)
 
     return inferenceByVariableElimination
 

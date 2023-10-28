@@ -210,7 +210,7 @@ class BayesNet(object):
             variableCPT = self.getCPT(variable)
             return variableCPT.specializeVariableDomains(reducedVariableDomains)
 
-    def getAllCPTsWithEvidence(self, evidenceDict=None):
+    def getAllCPTsWithEvidence(self, evidenceDict=None) -> list:  # list[Factor]
         """
         Returns a list of conditional probability tables (taking into
         account evidence) for all variables in the bayes net.
