@@ -49,7 +49,7 @@ def getNoisyDistance(pos1, pos2):
 observationDistributions = {}
 
 
-def getObservationProbability(noisyDistance, trueDistance):
+def getObservationProbability(noisyDistance, trueDistance) -> float:
     """
     Returns the probability P( noisyDistance | trueDistance ).
     """
