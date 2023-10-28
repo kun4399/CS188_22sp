@@ -101,10 +101,21 @@ def joinFactors(factors: ValuesView[Factor]):
                              "\nappear in more than one input factor.\n" +
                              "Input factors: \n" +
                              "\n".join(map(str, factors)))
-
-    "*** YOUR CODE HERE ***"
-    raiseNotDefined()
-    "*** END YOUR CODE HERE ***"
+    factors_list = list(factors)
+    unconditioned_variables = set()
+    conditioned_variables = set()
+    domains = factors_list[0].variableDomainsDict()
+    for factor in factors_list:
+        unconditioned_variables = unconditioned_variables | factor.unconditionedVariables()
+        conditioned_variables = conditioned_variables | factor.conditionedVariables()
+    conditioned_variables = conditioned_variables - unconditioned_variables
+    new_factor = Factor(unconditioned_variables, conditioned_variables, domains)
+    for assignment in new_factor.getAllPossibleAssignmentDicts():
+        new_factor.setProbability(assignment, 1)
+        for factor in factors_list:
+            new_factor.setProbability(assignment,
+                                      new_factor.getProbability(assignment) * factor.getProbability(assignment))
+    return new_factor
 
 
 ########### ########### ###########
