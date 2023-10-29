@@ -45,7 +45,6 @@ def getNoisyDistance(pos1, pos2):
     distance = util.manhattanDistance(pos1, pos2)
     return max(0, distance + util.sample(SONAR_NOISE_PROBS, SONAR_NOISE_VALUES))
 
-
 observationDistributions = {}
 
 

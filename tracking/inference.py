@@ -445,8 +445,9 @@ class InferenceModule:
                            jailPosition: Tuple) -> float:
         """
         Return the probability P(noisyDistance | pacmanPosition, ghostPosition).
-        这里的ghostPosition是真实的位置吗？
+        这里的ghostPosition是猜测的位置
         监狱的位置是设定好了的，一旦被抓幽灵就会被传送到监狱所以他的位置就变成了监狱的位置
+        这个函数其实是直接算出来了全部的联合分布的概率，属于用枚举的方法进行推理
         """
         if ghostPosition == jailPosition:
             if noisyDistance is None:
@@ -566,10 +567,12 @@ class ExactInference(InferenceModule):
         The update model is not entirely stationary: it may depend on Pacman's
         current position. However, this is not a problem, as Pacman's current
         position is known.
+        这里使用的其实是HMM来计算，B(Wi+1) ∝ P(fi+1|Wi+1)∑P(Wi+1|wi)B(wi) 只不过从Wi到Wi+1，只有位置相同时概率为1（因为静止），其他均为0
+        所以最后B(Wi+1)看起来像是P(fi+1|Wi+1)连乘。并且P(W1)是一个均匀分布，因此直接省略了
         """
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
-        "*** END YOUR CODE HERE ***"
+        for pos in self.allPositions:
+            self.beliefs[pos] *= self.getObservationProb(observation, gameState.getPacmanPosition(), pos,
+                                                         self.getJailPosition())
         self.beliefs.normalize()
 
     ########### ########### ###########
@@ -584,10 +587,18 @@ class ExactInference(InferenceModule):
         The transition model is not entirely stationary: it may depend on
         Pacman's current position. However, this is not a problem, as Pacman's
         current position is known.
+        这里做的其实是B′(Wi+1) = ∑P(Wi+1|wi)B(wi)
         """
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
-        "*** END YOUR CODE HERE ***"
+        newBeliefs = DiscreteDistribution()
+        for oldPos in self.allPositions:
+            newPosDist = self.getPositionDistribution(gameState, oldPos)
+            for newPos, prob in newPosDist.items():
+                newBeliefs[newPos] += prob * self.beliefs[oldPos]
+        newBeliefs.normalize()
+        self.beliefs = newBeliefs
+
+
+
 
     def getBeliefDistribution(self):
         return self.beliefs
