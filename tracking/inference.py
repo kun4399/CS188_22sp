@@ -640,7 +640,7 @@ class ParticleFilter(InferenceModule):
         """
         beliefDistribution = DiscreteDistribution()
         for particle in self.particles:
-            beliefDistribution[particle] += 1
+            beliefDistribution[particle] += 1  # 这里默认初始化为0
         beliefDistribution.normalize()
         return beliefDistribution
 
@@ -660,19 +660,28 @@ class ParticleFilter(InferenceModule):
         be reinitialized by calling initializeUniformly. The total method of
         the DiscreteDistribution may be useful.
         """
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
-        "*** END YOUR CODE HERE ***"
+        beliefDistribution = DiscreteDistribution()
+        pacman_state = gameState.getPacmanPosition()
+        jail_position = self.getJailPosition()
+        for particle in self.particles:
+            beliefDistribution[particle] += self.getObservationProb(observation, pacman_state, particle, jail_position)
+        if beliefDistribution.total() == 0:
+            self.initializeUniformly(gameState)
+            return
+        for i in range(self.numParticles):
+            self.particles[i] = beliefDistribution.sample()
 
-    ########### ########### ###########
-    ########### QUESTION 11 ###########
-    ########### ########### ###########
 
-    def elapseTime(self, gameState):
-        """
-        Sample each particle's next state based on its current state and the
-        gameState.
-        """
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
-        "*** END YOUR CODE HERE ***"
+
+########### ########### ###########
+########### QUESTION 11 ###########
+########### ########### ###########
+
+def elapseTime(self, gameState):
+    """
+    Sample each particle's next state based on its current state and the
+    gameState.
+    """
+    "*** YOUR CODE HERE ***"
+    raiseNotDefined()
+    "*** END YOUR CODE HERE ***"
