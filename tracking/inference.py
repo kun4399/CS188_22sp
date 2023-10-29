@@ -407,8 +407,8 @@ class InferenceModule:
         if pacmanPosition == ghostPosition:  # The ghost has been caught!
             dist[jail] = 1.0
             return dist
-        pacmanSuccessorStates = game.Actions.getLegalNeighbors(pacmanPosition, \
-                                                               gameState.getWalls())  # Positions Pacman can move to
+        pacmanSuccessorStates = game.Actions.getLegalNeighbors(pacmanPosition, gameState.getWalls())
+        # Positions Pacman can move to
         if ghostPosition in pacmanSuccessorStates:  # Ghost could get caught
             mult = 1.0 / float(len(pacmanSuccessorStates))
             dist[jail] = mult
@@ -596,9 +596,6 @@ class ExactInference(InferenceModule):
                 newBeliefs[newPos] += prob * self.beliefs[oldPos]
         newBeliefs.normalize()
         self.beliefs = newBeliefs
-
-
-
 
     def getBeliefDistribution(self):
         return self.beliefs

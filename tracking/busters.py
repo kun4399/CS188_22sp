@@ -201,7 +201,7 @@ class GameState:
     # Additions for Busters Pacman #
     ##############################
 
-    def getLivingGhosts(self):
+    def getLivingGhosts(self)->list[bool]:
         """
         Returns a list of booleans indicating which ghosts are not yet captured.
 
