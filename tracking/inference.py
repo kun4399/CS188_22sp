@@ -677,11 +677,13 @@ class ParticleFilter(InferenceModule):
 ########### QUESTION 11 ###########
 ########### ########### ###########
 
-def elapseTime(self, gameState):
-    """
-    Sample each particle's next state based on its current state and the
-    gameState.
-    """
-    "*** YOUR CODE HERE ***"
-    raiseNotDefined()
-    "*** END YOUR CODE HERE ***"
+    def elapseTime(self, gameState):
+        """
+        Sample each particle's next state based on its current state and the
+        gameState.
+        """
+        newParticles = []
+        for oldPos in self.particles:
+            newPosDist = self.getPositionDistribution(gameState, oldPos)
+            newParticles.append(newPosDist.sample())
+        self.particles = newParticles
