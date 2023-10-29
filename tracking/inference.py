@@ -624,11 +624,11 @@ class ParticleFilter(InferenceModule):
         a particle could be located. Particles should be evenly (not randomly)
         distributed across positions in order to ensure a uniform prior. Use
         self.particles for the list of particles.
+        为啥这里的particles取的数量要比legalPositions多很多？
         """
         self.particles = []
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
-        "*** END YOUR CODE HERE ***"
+        for i in range(self.numParticles):
+            self.particles.append(self.legalPositions[i % len(self.legalPositions)])
 
     def getBeliefDistribution(self):
         """
@@ -638,9 +638,11 @@ class ParticleFilter(InferenceModule):
 
         This function should return a normalized distribution.
         """
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
-        "*** END YOUR CODE HERE ***"
+        beliefDistribution = DiscreteDistribution()
+        for particle in self.particles:
+            beliefDistribution[particle] += 1
+        beliefDistribution.normalize()
+        return beliefDistribution
 
     ########### ########### ###########
     ########### QUESTION 10 ###########
