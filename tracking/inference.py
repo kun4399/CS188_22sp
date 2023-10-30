@@ -671,11 +671,9 @@ class ParticleFilter(InferenceModule):
         for i in range(self.numParticles):
             self.particles[i] = beliefDistribution.sample()
 
-
-
-########### ########### ###########
-########### QUESTION 11 ###########
-########### ########### ###########
+    ########### ########### ###########
+    ########### QUESTION 11 ###########
+    ########### ########### ###########
 
     def elapseTime(self, gameState):
         """
