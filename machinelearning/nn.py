@@ -1,12 +1,15 @@
 import numpy as np
 
+
 def format_shape(shape):
     return "x".join(map(str, shape)) if shape else "()"
+
 
 class Node(object):
     def __repr__(self):
         return "<{} shape={} at {}>".format(
             type(self).__name__, format_shape(self.data.shape), hex(id(self)))
+
 
 class DataNode(Node):
     """
@@ -14,6 +17,7 @@ class DataNode(Node):
 
     You should not need to use this class directly.
     """
+
     def __init__(self, data):
         self.parents = []
         self.data = data
@@ -25,6 +29,7 @@ class DataNode(Node):
     def _backward(gradient, *inputs):
         return []
 
+
 class Parameter(DataNode):
     """
     A Parameter node stores parameters used in a neural network (or perceptron).
@@ -32,6 +37,7 @@ class Parameter(DataNode):
     Use the the `update` method to update parameters when training the
     perceptron or neural network.
     """
+
     def __init__(self, *shape):
         assert len(shape) == 2, (
             "Shape must have 2 dimensions, instead has {}".format(len(shape)))
@@ -57,6 +63,7 @@ class Parameter(DataNode):
         assert np.all(np.isfinite(self.data)), (
             "Parameter contains NaN or infinity after update, cannot continue")
 
+
 class Constant(DataNode):
     """
     A Constant node is used to represent:
@@ -67,6 +74,7 @@ class Constant(DataNode):
     You should not need to construct any Constant nodes directly; they will
     instead be provided by either the dataset or when you call `nn.gradients`.
     """
+
     def __init__(self, data):
         assert isinstance(data, np.ndarray), (
             "Data should be a numpy array, instead has type {!r}".format(
@@ -76,17 +84,20 @@ class Constant(DataNode):
                 data.dtype))
         super().__init__(data)
 
+
 class FunctionNode(Node):
     """
     A FunctionNode represents a value that is computed based on other nodes.
     The FunctionNode class performs necessary book-keeping to compute gradients.
     """
+
     def __init__(self, *parents):
         assert all(isinstance(parent, Node) for parent in parents), (
             "Inputs must be node objects, instead got types {!r}".format(
                 tuple(type(parent).__name__ for parent in parents)))
         self.parents = parents
         self.data = self._forward(*(parent.data for parent in parents))
+
 
 class Add(FunctionNode):
     """
@@ -99,6 +110,7 @@ class Add(FunctionNode):
     Output:
         a Node with shape (batch_size x num_features)
     """
+
     @staticmethod
     def _forward(*inputs):
         assert len(inputs) == 2, "Expected 2 inputs, got {}".format(len(inputs))
@@ -118,6 +130,7 @@ class Add(FunctionNode):
         assert gradient.shape == inputs[0].shape
         return [gradient, gradient]
 
+
 class AddBias(FunctionNode):
     """
     Adds a bias vector to each feature vector
@@ -129,6 +142,7 @@ class AddBias(FunctionNode):
     Output:
         a Node with shape (batch_size x num_features)
     """
+
     @staticmethod
     def _forward(*inputs):
         assert len(inputs) == 2, "Expected 2 inputs, got {}".format(len(inputs))
@@ -152,6 +166,7 @@ class AddBias(FunctionNode):
         assert gradient.shape == inputs[0].shape
         return [gradient, np.sum(gradient, axis=0, keepdims=True)]
 
+
 class DotProduct(FunctionNode):
     """
     Batched dot product
@@ -162,6 +177,7 @@ class DotProduct(FunctionNode):
         weights: a Node with shape (1 x num_features)
     Output: a Node with shape (batch_size x 1)
     """
+
     @staticmethod
     def _forward(*inputs):
         assert len(inputs) == 2, "Expected 2 inputs, got {}".format(len(inputs))
@@ -189,6 +205,7 @@ class DotProduct(FunctionNode):
             "Backpropagation through DotProduct nodes is not needed in this "
             "assignment")
 
+
 class Linear(FunctionNode):
     """
     Applies a linear transformation (matrix multiplication) to the input
@@ -199,6 +216,7 @@ class Linear(FunctionNode):
         weights: a Node with shape (input_features x output_features)
     Output: a node with shape (batch_size x output_features)
     """
+
     @staticmethod
     def _forward(*inputs):
         assert len(inputs) == 2, "Expected 2 inputs, got {}".format(len(inputs))
@@ -220,6 +238,7 @@ class Linear(FunctionNode):
         assert gradient.shape[1] == inputs[1].shape[1]
         return [np.dot(gradient, inputs[1].T), np.dot(inputs[0].T, gradient)]
 
+
 class ReLU(FunctionNode):
     """
     An element-wise Rectified Linear Unit nonlinearity: max(x, 0).
@@ -230,6 +249,7 @@ class ReLU(FunctionNode):
         x: a Node with shape (batch_size x num_features)
     Output: a Node with the same shape as x, but no negative entries
     """
+
     @staticmethod
     def _forward(*inputs):
         assert len(inputs) == 1, "Expected 1 input, got {}".format(len(inputs))
@@ -243,6 +263,7 @@ class ReLU(FunctionNode):
         assert gradient.shape == inputs[0].shape
         return [gradient * np.where(inputs[0] > 0, 1.0, 0.0)]
 
+
 class SquareLoss(FunctionNode):
     """
     This node first computes 0.5 * (a[i,j] - b[i,j])**2 at all positions (i,j)
@@ -255,6 +276,7 @@ class SquareLoss(FunctionNode):
         b: a Node with shape (batch_size x dim)
     Output: a scalar Node (containing a single floating-point number)
     """
+
     @staticmethod
     def _forward(*inputs):
         assert len(inputs) == 2, "Expected 2 inputs, got {}".format(len(inputs))
@@ -277,6 +299,7 @@ class SquareLoss(FunctionNode):
             gradient * (inputs[1] - inputs[0]) / inputs[0].size
         ]
 
+
 class SoftmaxLoss(FunctionNode):
     """
     A batched softmax loss, used for classification problems.
@@ -293,6 +316,7 @@ class SoftmaxLoss(FunctionNode):
             and the sum of values along each row should be 1.
     Output: a scalar Node (containing a single floating-point number)
     """
+
     @staticmethod
     def log_softmax(logits):
         log_probs = logits - np.max(logits, axis=1, keepdims=True)
@@ -326,6 +350,7 @@ class SoftmaxLoss(FunctionNode):
             gradient * (np.exp(log_probs) - inputs[1]) / inputs[0].shape[0],
             gradient * -log_probs / inputs[0].shape[0]
         ]
+
 
 def gradients(loss, parameters):
     """
@@ -375,6 +400,7 @@ def gradients(loss, parameters):
             grads[parent] += parent_grad
 
     return [Constant(grads[parameter]) for parameter in parameters]
+
 
 def as_scalar(node):
     """

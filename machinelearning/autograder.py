@@ -10,12 +10,14 @@ import random
 import sys
 import traceback
 
+
 class WritableNull:
     def write(self, string):
         pass
 
     def flush(self):
         pass
+
 
 class Tracker(object):
     def __init__(self, questions, maxes, prereqs, mute_output):
@@ -103,10 +105,10 @@ class Tracker(object):
         print("\nProvisional grades\n==================")
 
         for q in self.questions:
-          print('Question %s: %d/%d' % (q, self.points[q], self.maxes[q]))
+            print('Question %s: %d/%d' % (q, self.points[q], self.maxes[q]))
         print('------------------')
         print('Total: %d/%d' % (sum(self.points.values()),
-            sum([self.maxes[q] for q in self.questions])))
+                                sum([self.maxes[q] for q in self.questions])))
 
         print("""
 Your grades are NOT yet registered.  To register your grades, make sure
@@ -116,8 +118,11 @@ to follow your instructor's guidelines to receive credit on your project.
     def add_points(self, pts):
         self.points[self.current_question] += pts
 
+
 TESTS = []
 PREREQS = {}
+
+
 def add_prereq(q, pre):
     if isinstance(pre, str):
         pre = [pre]
@@ -126,47 +131,51 @@ def add_prereq(q, pre):
         PREREQS[q] = set()
     PREREQS[q] |= set(pre)
 
+
 def test(q, points):
     def deco(fn):
         TESTS.append((q, points, fn))
         return fn
+
     return deco
 
+
 def parse_options(argv):
-    parser = optparse.OptionParser(description = 'Run public tests on student code')
+    parser = optparse.OptionParser(description='Run public tests on student code')
     parser.set_defaults(
         edx_output=False,
         gs_output=False,
         no_graphics=False,
         mute_output=False,
         check_dependencies=False,
-        )
+    )
     parser.add_option('--edx-output',
-                        dest = 'edx_output',
-                        action = 'store_true',
-                        help = 'Ignored, present for compatibility only')
+                      dest='edx_output',
+                      action='store_true',
+                      help='Ignored, present for compatibility only')
     parser.add_option('--gradescope-output',
-                        dest = 'gs_output',
-                        action = 'store_true',
-                        help = 'Ignored, present for compatibility only')
+                      dest='gs_output',
+                      action='store_true',
+                      help='Ignored, present for compatibility only')
     parser.add_option('--question', '-q',
-                        dest = 'grade_question',
-                        default = None,
-                        help = 'Grade only one question (e.g. `-q q1`)')
+                      dest='grade_question',
+                      default=None,
+                      help='Grade only one question (e.g. `-q q1`)')
     parser.add_option('--no-graphics',
-                        dest = 'no_graphics',
-                        action = 'store_true',
-                        help = 'Do not display graphics (visualizing your implementation is highly recommended for debugging).')
+                      dest='no_graphics',
+                      action='store_true',
+                      help='Do not display graphics (visualizing your implementation is highly recommended for debugging).')
     parser.add_option('--mute',
-                        dest = 'mute_output',
-                        action = 'store_true',
-                        help = 'Mute output from executing tests')
+                      dest='mute_output',
+                      action='store_true',
+                      help='Mute output from executing tests')
     parser.add_option('--check-dependencies',
-                        dest = 'check_dependencies',
-                        action = 'store_true',
-                        help = 'check that numpy and matplotlib are installed')
+                      dest='check_dependencies',
+                      action='store_true',
+                      help='check that numpy and matplotlib are installed')
     (options, args) = parser.parse_args(argv)
     return options
+
 
 def main():
     options = parse_options(sys.argv)
@@ -219,6 +228,7 @@ def main():
         tracker.end_q()
     tracker.finalize()
 
+
 ################################################################################
 # Tests begin here
 ################################################################################
@@ -229,6 +239,7 @@ import contextlib
 
 import nn
 import backend
+
 
 def check_dependencies():
     import matplotlib.pyplot as plt
@@ -243,12 +254,14 @@ def check_dependencies():
         angle = t * 0.05
         x = np.sin(angle)
         y = np.cos(angle)
-        line.set_data([x,-x], [y,-y])
+        line.set_data([x, -x], [y, -y])
         fig.canvas.draw_idle()
         fig.canvas.start_event_loop(1e-3)
 
+
 def disable_graphics():
     backend.use_graphics = False
+
 
 @contextlib.contextmanager
 def no_graphics():
@@ -257,32 +270,35 @@ def no_graphics():
     yield
     backend.use_graphics = old_use_graphics
 
+
 def verify_node(node, expected_type, expected_shape, method_name):
     if expected_type == 'parameter':
         assert node is not None, (
             "{} should return an instance of nn.Parameter, not None".format(method_name))
         assert isinstance(node, nn.Parameter), (
             "{} should return an instance of nn.Parameter, instead got type {!r}".format(
-            method_name, type(node).__name__))
+                method_name, type(node).__name__))
     elif expected_type == 'loss':
         assert node is not None, (
             "{} should return an instance a loss node, not None".format(method_name))
         assert isinstance(node, (nn.SquareLoss, nn.SoftmaxLoss)), (
             "{} should return a loss node, instead got type {!r}".format(
-            method_name, type(node).__name__))
+                method_name, type(node).__name__))
     elif expected_type == 'node':
         assert node is not None, (
             "{} should return a node object, not None".format(method_name))
         assert isinstance(node, nn.Node), (
             "{} should return a node object, instead got type {!r}".format(
-            method_name, type(node).__name__))
+                method_name, type(node).__name__))
     else:
         assert False, "If you see this message, please report a bug in the autograder"
 
     if expected_type != 'loss':
-        assert all([(expected is '?' or actual == expected) for (actual, expected) in zip(node.data.shape, expected_shape)]), (
+        assert all(
+            [(expected == '?' or actual == expected) for (actual, expected) in zip(node.data.shape, expected_shape)]), (
             "{} should return an object with shape {}, got {}".format(
                 method_name, nn.format_shape(expected_shape), nn.format_shape(node.data.shape)))
+
 
 def trace_node(node_to_trace):
     """
@@ -301,6 +317,7 @@ def trace_node(node_to_trace):
     visit(node_to_trace)
 
     return nodes
+
 
 @test('q1', points=6)
 def check_perceptron(tracker):
@@ -326,7 +343,7 @@ def check_perceptron(tracker):
         expected_score = float(np.dot(point.flatten(), p_weights.data.flatten()))
         assert np.isclose(calculated_score, expected_score), (
             "The score computed by PerceptronModel.run() ({:.4f}) does not match the expected score ({:.4f})".format(
-            calculated_score, expected_score))
+                calculated_score, expected_score))
 
     # Check that get_prediction returns the correct values, including the
     # case when a point lies exactly on the decision boundary
@@ -337,14 +354,14 @@ def check_perceptron(tracker):
             prediction = p.get_prediction(nn.Constant(point))
             assert prediction == 1 or prediction == -1, (
                 "PerceptronModel.get_prediction() should return 1 or -1, not {}".format(
-                prediction))
+                    prediction))
 
             expected_prediction = np.asscalar(np.where(np.dot(point, p.get_weights().data.T) >= 0, 1, -1))
             assert prediction == expected_prediction, (
                 "PerceptronModel.get_prediction() returned {}; expected {}".format(
                     prediction, expected_prediction))
 
-    tracker.add_points(2) # Partial credit for passing sanity checks
+    tracker.add_points(2)  # Partial credit for passing sanity checks
 
     print("Sanity checking perceptron weight updates...")
 
@@ -375,15 +392,15 @@ def check_perceptron(tracker):
         if not np.all(new_weights == expected_weights):
             print()
             print("Initial perceptron weights were: [{:.4f}, {:.4f}]".format(
-                orig_weights[0,0], orig_weights[0,1]))
+                orig_weights[0, 0], orig_weights[0, 1]))
             print("All data points in the dataset were identical and had:")
             print("    x = [{:.4f}, {:.4f}]".format(
-                point[0,0], point[0,1]))
+                point[0, 0], point[0, 1]))
             print("    y = -1")
             print("Your trained weights were: [{:.4f}, {:.4f}]".format(
-                new_weights[0,0], new_weights[0,1]))
+                new_weights[0, 0], new_weights[0, 1]))
             print("Expected weights after training: [{:.4f}, {:.4f}]".format(
-                expected_weights[0,0], expected_weights[0,1]))
+                expected_weights[0, 0], expected_weights[0, 1]))
             print()
             assert False, "Weight update sanity check failed"
 
@@ -398,11 +415,13 @@ def check_perceptron(tracker):
 
     accuracy = np.mean(np.where(np.dot(dataset.x, model.get_weights().data.T) >= 0.0, 1.0, -1.0) == dataset.y)
     if accuracy < 1.0:
-        print("The weights learned by your perceptron correctly classified {:.2%} of training examples".format(accuracy))
+        print(
+            "The weights learned by your perceptron correctly classified {:.2%} of training examples".format(accuracy))
         print("To receive full points for this question, your perceptron must converge to 100% accuracy")
         return
 
     tracker.add_points(4)
+
 
 @test('q2', points=6)
 def check_regression(tracker):
@@ -439,7 +458,7 @@ def check_regression(tracker):
             assert not isinstance(node, nn.Parameter) or node in detected_parameters, (
                 "RegressionModel.get_loss() should not use additional parameters not used by RegressionModel.run()")
 
-    tracker.add_points(2) # Partial credit for passing sanity checks
+    tracker.add_points(2)  # Partial credit for passing sanity checks
 
     model.train(dataset)
     backend.maybe_sleep_and_close(1)
@@ -452,7 +471,7 @@ def check_regression(tracker):
     # to always return zero
     train_predicted = model.run(nn.Constant(dataset.x))
     verify_node(train_predicted, 'node', (dataset.x.shape[0], 1), "RegressionModel.run()")
-    sanity_loss = 0.5 * np.mean((train_predicted.data - dataset.y)**2)
+    sanity_loss = 0.5 * np.mean((train_predicted.data - dataset.y) ** 2)
 
     assert np.isclose(train_loss, sanity_loss), (
         "RegressionModel.get_loss() returned a loss of {:.4f}, "
@@ -465,7 +484,9 @@ def check_regression(tracker):
         print("Your final loss is: {:f}".format(train_loss))
         tracker.add_points(4)
     else:
-        print("Your final loss ({:f}) must be no more than {:.4f} to receive full points for this question".format(train_loss, loss_threshold))
+        print("Your final loss ({:f}) must be no more than {:.4f} to receive full points for this question".format(
+            train_loss, loss_threshold))
+
 
 @test('q3', points=6)
 def check_digit_classification(tracker):
@@ -502,7 +523,7 @@ def check_digit_classification(tracker):
             assert not isinstance(node, nn.Parameter) or node in detected_parameters, (
                 "DigitClassificationModel.get_loss() should not use additional parameters not used by DigitClassificationModel.run()")
 
-    tracker.add_points(2) # Partial credit for passing sanity checks
+    tracker.add_points(2)  # Partial credit for passing sanity checks
 
     model.train(dataset)
 
@@ -515,7 +536,10 @@ def check_digit_classification(tracker):
         print("Your final test set accuracy is: {:%}".format(test_accuracy))
         tracker.add_points(4)
     else:
-        print("Your final test set accuracy ({:%}) must be at least {:.0%} to receive full points for this question".format(test_accuracy, accuracy_threshold))
+        print(
+            "Your final test set accuracy ({:%}) must be at least {:.0%} to receive full points for this question".format(
+                test_accuracy, accuracy_threshold))
+
 
 @test('q4', points=7)
 def check_lang_id(tracker):
@@ -562,7 +586,7 @@ def check_lang_id(tracker):
             assert not isinstance(node, nn.Parameter) or node in detected_parameters, (
                 "LanguageIDModel.get_loss() should not use additional parameters not used by LanguageIDModel.run()")
 
-    tracker.add_points(2) # Partial credit for passing sanity checks
+    tracker.add_points(2)  # Partial credit for passing sanity checks
 
     model.train(dataset)
 
@@ -573,7 +597,10 @@ def check_lang_id(tracker):
         print("Your final test set accuracy is: {:%}".format(test_accuracy))
         tracker.add_points(5)
     else:
-        print("Your final test set accuracy ({:%}) must be at least {:.0%} to receive full points for this question".format(test_accuracy, accuracy_threshold))
+        print(
+            "Your final test set accuracy ({:%}) must be at least {:.0%} to receive full points for this question".format(
+                test_accuracy, accuracy_threshold))
+
 
 if __name__ == '__main__':
     main()
