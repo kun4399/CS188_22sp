@@ -68,7 +68,7 @@ class RegressionModel(object):
         self.learning_rate = 0.01
         self.batch_size = 200
         self.w1 = nn.Parameter(1, self.hidden_layer)  # 因为特征只有一个，所以w1是1*hidden_layer的矩阵
-        self.b1 = nn.Parameter(1, self.hidden_layer)
+        self.b1 = nn.Parameter(1, self.hidden_layer)  # b通常是1*hidden_layer的矩阵，因为每个样本处理后都会被加上相同的b
         self.w2 = nn.Parameter(self.hidden_layer, 1)
         self.b2 = nn.Parameter(1, 1)
 
@@ -107,12 +107,13 @@ class RegressionModel(object):
             for x, y in dataset.iterate_once(self.batch_size):
                 grad_w1, grad_b1, grad_w2, grad_b2 = nn.gradients(self.get_loss(x, y),
                                                                   [self.w1, self.b1, self.w2, self.b2])
+                # nn.gradients 方法传入的参数需要按照计算时的顺序传入，否则会报错
                 self.w1.update(grad_w1, -self.learning_rate)
                 self.b1.update(grad_b1, -self.learning_rate)
                 self.w2.update(grad_w2, -self.learning_rate)
                 self.b2.update(grad_b2, -self.learning_rate)
                 loss = nn.as_scalar(self.get_loss(x, y))
-                print(loss)
+                # print(loss)
 
 
 class DigitClassificationModel(object):
@@ -132,7 +133,31 @@ class DigitClassificationModel(object):
 
     def __init__(self):
         # Initialize your model parameters here
-        "*** YOUR CODE HERE ***"
+        # 二层神经网络似乎收敛速度较慢
+        """
+        layer1= 50, layer2 = 100, learning_rate = 0.1, batch_size = 500 epochs = 5的时候，准确率为0.92
+        layer1= 100, layer2 = 100, learning_rate = 0.1, batch_size = 500 epochs = 5的时候，准确率为0.93
+        layer1= 150, layer2 = 100, learning_rate = 0.1, batch_size = 500 epochs = 5的时候，准确率为0.93
+        layer1= 200, layer2 = 100, learning_rate = 0.1, batch_size = 500 epochs = 5的时候，准确率为0.935
+        layer1= 250, layer2 = 100, learning_rate = 0.1, batch_size = 500 epochs = 5的时候，准确率为0.935
+        layer1= 300, layer2 = 100, learning_rate = 0.1, batch_size = 500 epochs = 5的时候，准确率为0.939
+        layer1= 350, layer2 = 100, learning_rate = 0.1, batch_size = 500 epochs = 5的时候，准确率为0.937
+        layer1= 400, layer2 = 100, learning_rate = 0.1, batch_size = 500 epochs = 5的时候，准确率为0.938
+        layer1= 300, layer2 = 10, learning_rate = 0.1, batch_size = 500 epochs = 5的时候，准确率为0.932
+        layer1= 300, layer2 = 50, learning_rate = 0.1, batch_size = 500 epochs = 5的时候，准确率为0.937
+        layer1= 300, layer2 = 150, learning_rate = 0.1, batch_size = 500 epochs = 5的时候，准确率为0.937
+        成功的超参数：layer1= 300, layer2 = 100, learning_rate = 0.5, batch_size = 250
+        """
+        self.hidden_layer1 = 300
+        self.hidden_layer2 = 100
+        self.learning_rate = 0.5  # learning_rate是最重要的参数，这个也和batch_size有关，而且不是越小越好，太小了会导致收敛速度过慢甚至不一定达到最优解
+        self.batch_size = 250
+        self.w1 = nn.Parameter(784, self.hidden_layer1)
+        self.b1 = nn.Parameter(1, self.hidden_layer1)
+        self.w2 = nn.Parameter(self.hidden_layer1, self.hidden_layer2)
+        self.b2 = nn.Parameter(1, self.hidden_layer2)
+        self.w_final = nn.Parameter(self.hidden_layer2, 10)
+        self.b_final = nn.Parameter(1, 10)
 
     def run(self, x):
         """
@@ -148,7 +173,11 @@ class DigitClassificationModel(object):
             A node with shape (batch_size x 10) containing predicted scores
                 (also called logits)
         """
-        "*** YOUR CODE HERE ***"
+
+        output1 = nn.ReLU(nn.AddBias(nn.Linear(x, self.w1), self.b1))
+        output2 = nn.ReLU(nn.AddBias(nn.Linear(output1, self.w2), self.b2))
+        final_output = nn.AddBias(nn.Linear(output2, self.w_final), self.b_final)
+        return final_output
 
     def get_loss(self, x, y):
         """
@@ -163,13 +192,31 @@ class DigitClassificationModel(object):
             y: a node with shape (batch_size x 10)
         Returns: a loss node
         """
-        "*** YOUR CODE HERE ***"
+        return nn.SoftmaxLoss(self.run(x), y)
 
     def train(self, dataset):
         """
         Trains the model.
         """
-        "*** YOUR CODE HERE ***"
+        while True:
+            for x, y in dataset.iterate_once(self.batch_size):
+                grad_w1, grad_b1, grad_w2, grad_b2, grad_w_final, grad_b_final = nn.gradients(self.get_loss(x, y),
+                                                                                              [self.w1, self.b1,
+                                                                                               self.w2, self.b2,
+                                                                                               self.w_final,
+                                                                                               self.b_final])
+                self.w1.update(grad_w1, -self.learning_rate)
+                self.b1.update(grad_b1, -self.learning_rate)
+                self.w2.update(grad_w2, -self.learning_rate)
+                self.b2.update(grad_b2, -self.learning_rate)
+                self.w_final.update(grad_w_final, -self.learning_rate)
+                self.b_final.update(grad_b_final, -self.learning_rate)
+                accuracy = dataset.get_validation_accuracy()
+                # print(accuracy, accuracy > 0.975)
+                if accuracy > 0.985:
+                    return
+                elif accuracy > 0.965:
+                    self.learning_rate = 0.1
 
 
 class LanguageIDModel(object):
