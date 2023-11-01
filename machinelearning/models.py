@@ -150,7 +150,7 @@ class DigitClassificationModel(object):
         """
         self.hidden_layer1 = 300
         self.hidden_layer2 = 100
-        self.learning_rate = 0.5  # learning_rate是最重要的参数，这个也和batch_size有关，而且不是越小越好，太小了会导致收敛速度过慢甚至不一定达到最优解
+        self.learning_rate = 0.7  # learning_rate是最重要的参数，这个也和batch_size有关，而且不是越小越好，太小了会导致收敛速度超级慢甚至不一定达到最优解
         self.batch_size = 250
         self.w1 = nn.Parameter(784, self.hidden_layer1)
         self.b1 = nn.Parameter(1, self.hidden_layer1)
@@ -213,10 +213,8 @@ class DigitClassificationModel(object):
                 self.b_final.update(grad_b_final, -self.learning_rate)
                 accuracy = dataset.get_validation_accuracy()
                 # print(accuracy, accuracy > 0.975)
-                if accuracy > 0.985:
+                if accuracy > 0.98:
                     return
-                elif accuracy > 0.965:
-                    self.learning_rate = 0.1
 
 
 class LanguageIDModel(object):
