@@ -10,6 +10,7 @@ import nn
 
 use_graphics = True
 
+
 def maybe_sleep_and_close(seconds):
     if use_graphics and plt.get_fignums():
         time.sleep(seconds)
@@ -21,6 +22,7 @@ def maybe_sleep_and_close(seconds):
                 fig.canvas.start_event_loop(1e-3)
             except:
                 pass
+
 
 def get_data_path(filename):
     path = os.path.join(
@@ -35,6 +37,7 @@ def get_data_path(filename):
         raise Exception("Could not find data file: {}".format(filename))
     return path
 
+
 class Dataset(object):
     def __init__(self, x, y):
         assert isinstance(x, np.ndarray)
@@ -43,7 +46,7 @@ class Dataset(object):
         assert np.issubdtype(y.dtype, np.floating)
         assert x.ndim == 2
         assert y.ndim == 2
-        assert x.shape[0] == y.shape[0]
+        assert x.shape[0] == y.shape[0] # shape[0] is the number of rows，shape[1] is the number of columns
         self.x = x
         self.y = y
 
@@ -70,6 +73,7 @@ class Dataset(object):
             "No validation data is available for this dataset. "
             "In this assignment, only the Digit Classification and Language "
             "Identification datasets have validation data.")
+
 
 class PerceptronDataset(Dataset):
     def __init__(self, model):
@@ -121,6 +125,7 @@ class PerceptronDataset(Dataset):
                 self.fig.canvas.start_event_loop(1e-3)
                 self.last_update = time.time()
 
+
 class RegressionDataset(Dataset):
     def __init__(self, model):
         x = np.expand_dims(np.linspace(-2 * np.pi, 2 * np.pi, num=200), axis=1)
@@ -158,10 +163,11 @@ class RegressionDataset(Dataset):
                     nn.Constant(self.x), nn.Constant(self.y)).data
                 self.learned.set_data(self.x[self.argsort_x], predicted[self.argsort_x])
                 self.text.set_text("processed: {:,}\nloss: {:.6f}".format(
-                   self.processed, loss))
+                    self.processed, loss))
                 self.fig.canvas.draw_idle()
                 self.fig.canvas.start_event_loop(1e-3)
                 self.last_update = time.time()
+
 
 class DigitClassificationDataset(Dataset):
     def __init__(self, model):
@@ -272,6 +278,7 @@ class DigitClassificationDataset(Dataset):
         dev_accuracy = np.mean(dev_predicted == self.dev_labels)
         return dev_accuracy
 
+
 class LanguageIDDataset(Dataset):
     def __init__(self, model):
         self.model = model
@@ -294,7 +301,7 @@ class LanguageIDDataset(Dataset):
             self.test_buckets = data['test_buckets']
 
         self.epoch = 0
-        self.bucket_weights = self.train_buckets[:,1] - self.train_buckets[:,0]
+        self.bucket_weights = self.train_buckets[:, 1] - self.train_buckets[:, 0]
         self.bucket_weights = self.bucket_weights / float(self.bucket_weights.sum())
 
         self.chars_print = self.chars
@@ -323,13 +330,13 @@ alphabet above have been substituted with ASCII symbols.""".strip())
         max_lang_len = max([len(x) for x in self.language_names])
 
         self.predicted_template = u"Pred: {:<NUM}".replace('NUM',
-            str(max_lang_len))
+                                                           str(max_lang_len))
 
         self.word_template = u"  "
         self.word_template += u"{:<NUM} ".replace('NUM', str(max_word_len))
         self.word_template += u"{:<NUM} ({:6.1%})".replace('NUM', str(max_lang_len))
         self.word_template += u" {:<NUM} ".replace('NUM',
-            str(max_lang_len + len('Pred: ')))
+                                                   str(max_lang_len + len('Pred: ')))
         for i in range(len(self.language_names)):
             self.word_template += u"|{}".format(self.language_codes[i])
             self.word_template += "{probs[" + str(i) + "]:4.0%}"
@@ -339,11 +346,11 @@ alphabet above have been substituted with ASCII symbols.""".strip())
     def _encode(self, inp_x, inp_y):
         xs = []
         for i in range(inp_x.shape[1]):
-            if np.all(inp_x[:,i] == -1):
+            if np.all(inp_x[:, i] == -1):
                 break
-            assert not np.any(inp_x[:,i] == -1), (
+            assert not np.any(inp_x[:, i] == -1), (
                 "Please report this error in the project: batching by length was done incorrectly in the provided code")
-            x = np.eye(len(self.chars))[inp_x[:,i]]
+            x = np.eye(len(self.chars))[inp_x[:, i]]
             xs.append(nn.Constant(x))
         y = np.eye(len(self.language_names))[inp_y]
         y = nn.Constant(y)
@@ -414,7 +421,7 @@ alphabet above have been substituted with ASCII symbols.""".strip())
                         dev_predicted_probs[idx, dev_correct[idx]],
                         "" if correct else self.predicted_template.format(
                             self.language_names[dev_predicted[idx]]),
-                        probs=dev_predicted_probs[idx,:],
+                        probs=dev_predicted_probs[idx, :],
                     ))
 
                 self.last_update = time.time()
@@ -442,6 +449,7 @@ def main():
     model = models.LanguageIDModel()
     dataset = LanguageIDDataset(model)
     model.train(dataset)
+
 
 if __name__ == "__main__":
     main()
