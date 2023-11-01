@@ -224,6 +224,8 @@ class LanguageIDModel(object):
     (See RegressionModel for more information about the APIs of different
     methods here. We recommend that you implement the RegressionModel before
     working on this part of the project.)
+    https://zhuanlan.zhihu.com/p/515649281 参考
+    batch_size 较小时应使用小一点的learning_rate
     """
 
     def __init__(self):
@@ -233,9 +235,15 @@ class LanguageIDModel(object):
         # You can refer to self.num_chars or len(self.languages) in your code
         self.num_chars = 47
         self.languages = ["English", "Spanish", "Finnish", "Dutch", "Polish"]
-
-        # Initialize your model parameters here
-        "*** YOUR CODE HERE ***"
+        self.hidden_layer = 300
+        self.learning_rate = 0.45
+        self.batch_size = 150
+        self.w_initial = nn.Parameter(self.num_chars, self.hidden_layer)
+        self.b_initial = nn.Parameter(1, self.hidden_layer)
+        self.w_hidden = nn.Parameter(self.hidden_layer, self.hidden_layer)
+        self.b_hidden = nn.Parameter(1, self.hidden_layer)
+        self.w_final = nn.Parameter(self.hidden_layer, 5)
+        self.b_final = nn.Parameter(1, 5)
 
     def run(self, xs):
         """
@@ -259,6 +267,10 @@ class LanguageIDModel(object):
         (batch_size x 5) containing scores, where higher scores correspond to
         greater probability of the word originating from a particular language.
 
+        这段话意思就是每个单词的每一个字母都是由一个长度为self.num_chars的数组表示的，数组中只有一个1，其余都是0，
+        而1所在的index就是这个字母在字母表中的位置，比如xz[1]表示输入的第二个字母，“cat”在第七行因为它是最后一个单词，
+        并且1在0下标因为"a"在在字母表中排第一。但我还是不能理解为啥这么做可以识别单词甚至句意
+
         Inputs:
             xs: a list with L elements (one per character), where each element
                 is a node with shape (batch_size x self.num_chars)
@@ -266,7 +278,12 @@ class LanguageIDModel(object):
             A node with shape (batch_size x 5) containing predicted scores
                 (also called logits)
         """
-        "*** YOUR CODE HERE ***"
+        initial_output = nn.ReLU(nn.AddBias(nn.Linear(xs[0], self.w_initial), self.b_initial))
+        for x in xs[1:]:
+            initial_output = nn.ReLU(
+                nn.AddBias(nn.Add(nn.Linear(x, self.w_initial), nn.Linear(initial_output, self.w_hidden)),
+                           self.b_hidden))
+        return nn.AddBias(nn.Linear(initial_output, self.w_final), self.b_final)
 
     def get_loss(self, xs, y):
         """
@@ -282,10 +299,26 @@ class LanguageIDModel(object):
             y: a node with shape (batch_size x 5)
         Returns: a loss node
         """
-        "*** YOUR CODE HERE ***"
+        return nn.SoftmaxLoss(self.run(xs), y)
 
     def train(self, dataset):
         """
         Trains the model.
         """
-        "*** YOUR CODE HERE ***"
+        while True:
+            for x, y in dataset.iterate_once(self.batch_size):
+                grad_w_initial, grad_b_initial, grad_w_hidden, grad_b_hidden, grad_w_final, grad_b_final = nn.gradients(
+                    self.get_loss(x, y),
+                    [self.w_initial, self.b_initial,
+                     self.w_hidden, self.b_hidden,
+                     self.w_final,
+                     self.b_final])
+                self.w_initial.update(grad_w_initial, -self.learning_rate)
+                self.b_initial.update(grad_b_initial, -self.learning_rate)
+                self.w_hidden.update(grad_w_hidden, -self.learning_rate)
+                self.b_hidden.update(grad_b_hidden, -self.learning_rate)
+                self.w_final.update(grad_w_final, -self.learning_rate)
+                self.b_final.update(grad_b_final, -self.learning_rate)
+                accuracy = dataset.get_validation_accuracy()
+                if accuracy > 0.9:
+                    return
