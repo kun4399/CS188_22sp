@@ -29,6 +29,7 @@ def question2a():
     return answerDiscount, answerNoise, answerLivingReward
     # If not possible, return 'NOT POSSIBLE'
 
+
 def question2b():
     """
       Prefer the close exit (+1), but avoiding the cliff (-10).
@@ -38,6 +39,7 @@ def question2b():
     answerLivingReward = None
     return answerDiscount, answerNoise, answerLivingReward
     # If not possible, return 'NOT POSSIBLE'
+
 
 def question2c():
     """
@@ -49,6 +51,7 @@ def question2c():
     return answerDiscount, answerNoise, answerLivingReward
     # If not possible, return 'NOT POSSIBLE'
 
+
 def question2d():
     """
       Prefer the distant exit (+10), avoiding the cliff (-10).
@@ -58,6 +61,7 @@ def question2d():
     answerLivingReward = None
     return answerDiscount, answerNoise, answerLivingReward
     # If not possible, return 'NOT POSSIBLE'
+
 
 def question2e():
     """
@@ -69,9 +73,11 @@ def question2e():
     return answerDiscount, answerNoise, answerLivingReward
     # If not possible, return 'NOT POSSIBLE'
 
+
 if __name__ == '__main__':
     print('Answers to analysis questions:')
     import analysis
+
     for q in [q for q in dir(analysis) if q.startswith('question')]:
         response = getattr(analysis, q)()
         print('  Question %s:\t%s' % (q, str(response)))
