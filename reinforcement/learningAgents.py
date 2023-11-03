@@ -116,7 +116,7 @@ class ReinforcementAgent(ValueEstimationAgent):
     #    Read These Functions          #
     ####################################
 
-    def getLegalActions(self, state):
+    def getLegalActions(self, state) -> tuple:
         """
           Get the actions available for a given
           state. This is what you should use to
